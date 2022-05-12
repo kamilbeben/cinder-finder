@@ -1,0 +1,40 @@
+
+.flex.equal-width {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.flex.equal-width.margin-between-sm > *:not(:first-child) {
+  margin-left: .5em;
+}
+
+.flex.equal-width > * {
+  flex: 1 1 auto;
+  width: 0;
+  min-width: 0;
+}
+
+.margin-top-sm {
+  margin-top: .5em;
+}
+
+.page-default {
+  height: inherit;
+  max-height: 70vh;
+  margin: auto;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  outline-offset: -.5em;
+}
+
+.button-group {
+  width: 100%;
+  display: flex;
+}
+
+.button-group > * {
+  flex: 1 1 auto;
+  width: auto;
+}
