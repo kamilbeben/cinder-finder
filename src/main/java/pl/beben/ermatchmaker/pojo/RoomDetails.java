@@ -19,7 +19,7 @@ public class RoomDetails extends IdentifiedRoomPojo {
   private static final long serialVersionUID = 5668632899628063985L;
 
   Long updateTimestamp;
-  List<UserPojo> guests = new ArrayList<>();
+  List<RoomMemberPojo> guests = new ArrayList<>();
 
   public RoomDetails(Long id, UserPojo host, RoomDraftPojo draft) {
     super(id, host, draft);
@@ -27,9 +27,35 @@ public class RoomDetails extends IdentifiedRoomPojo {
   }
   
   public RoomDetails addGuest(UserPojo user) {
-    guests.add(user);
+    final var member = new RoomMemberPojo(user);
+    member.setOnline(true);
+    guests.add(member);
     refreshUpdateTimestamp();
     return this;
+  }
+  
+  public void updateIsOnlineFlagByUserName(String userName, boolean isOnline) {
+
+    final var host = getHost();
+
+    if (Objects.equals(host.getUserName(), userName)) {
+      if (host.isOnline() == isOnline)
+        return;
+      
+      host.setOnline(isOnline);
+      refreshUpdateTimestamp();
+
+    } else {
+      guests.stream()
+        .filter(guest ->
+          Objects.equals(guest.getUserName(), userName) &&
+          guest.isOnline() != isOnline
+        )
+        .forEach(guest -> {
+          guest.setOnline(isOnline);
+          refreshUpdateTimestamp();
+        });
+    }
   }
 
   public void removeGuestByUserName(String userName) {

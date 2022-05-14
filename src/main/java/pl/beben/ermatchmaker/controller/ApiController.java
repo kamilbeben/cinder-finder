@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pl.beben.ermatchmaker.domain.Game;
 import pl.beben.ermatchmaker.domain.Platform;
-import pl.beben.ermatchmaker.domain.TestEntity;
-import pl.beben.ermatchmaker.domain.repository.TestEntityRepository;
 import pl.beben.ermatchmaker.pojo.IdentifiedRoomPojo;
 import pl.beben.ermatchmaker.pojo.RoomDetails;
 import pl.beben.ermatchmaker.pojo.RoomDraftPojo;
@@ -19,53 +17,50 @@ import java.util.List;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class ApiController {
-  
-  private final TestEntityRepository testEntityRepository;
+
   private final RoomService roomService;
   private final UserService userService;
 
-  @PostMapping("/in_game_name")
+  @GetMapping("/user/me")
+  public UserPojo getLoggedUser() {
+    return userService.getCurrentUser();
+  }
+
+  @PostMapping("/user/in_game_name")
   public void setInGameName(@RequestBody String inGameName) {
     userService.setInGameName(inGameName);
   }
 
-  @PostMapping("/register_to_and_get_details")
+  @PostMapping("/room/register_to_and_get_details")
   public RoomDetails registerToAndGetDetails(@RequestParam("id") Long id) {
     return roomService.registerToAndGetDetails(id);
   }
 
-  @PostMapping("/ping_returning_update_timestamp")
+  @PostMapping("/room/ping_returning_update_timestamp")
   public Long pingReturningUpdateTimestamp(@RequestParam("id") Long id) {
     return roomService.pingReturningUpdateTimestamp(id);
   }
 
-  @PostMapping("/create_room")
-  public Long createRoom(@RequestBody RoomDraftPojo room) {
-    return roomService.createNewRoom(room);
+  @PostMapping("/room/create_returning_id")
+  public Long createRoomReturningId(@RequestBody RoomDraftPojo room) {
+    return roomService.createRoomReturningId(room);
   }
 
-  @GetMapping("/rooms")
+  @DeleteMapping("/room/close_owned_by_current_user")
+  public void removeRoom() {
+    roomService.closeRoomOwnedByCurrentUser();
+  }
+
+  @DeleteMapping("/room/leave")
+  public void leaveRoom(@RequestParam("id") Long id) {
+    roomService.leaveRoom(id);
+  }
+
+  @GetMapping("/room/all")
   public List<? extends IdentifiedRoomPojo> getActiveRooms(@RequestParam("game") Game game,
                                                            @RequestParam("platform") Platform platform) {
     
     return roomService.getActive(game, platform);
-  }
-  
-  @GetMapping("/me")
-  public UserPojo getLoggedUser() {
-    return userService.getCurrentUser();
-  }
-  
-  @GetMapping("/test")
-  public Iterable<TestEntity> getTest() {
-    
-    if (false) {
-      final var entity = new TestEntity();
-      entity.setName("kek");
-      testEntityRepository.save(entity);
-    }
-    
-    return testEntityRepository.findAll();
   }
   
 }

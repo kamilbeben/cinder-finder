@@ -18,18 +18,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import pl.beben.ermatchmaker.domain.Game;
 import pl.beben.ermatchmaker.domain.Platform;
 import pl.beben.ermatchmaker.domain.RoomType;
-import pl.beben.ermatchmaker.pojo.IdentifiedRoomPojo;
-import pl.beben.ermatchmaker.pojo.RoomDetails;
-import pl.beben.ermatchmaker.pojo.RoomDraftPojo;
-import pl.beben.ermatchmaker.pojo.UserPojo;
+import pl.beben.ermatchmaker.pojo.*;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
@@ -51,8 +47,8 @@ class ApiControllerTest {
     final var secondAuthentication = createAuthentication();
     
     // when
-    final var firstUser = httpMe(firstAuthentication);
-    final var secondUser = httpMe(secondAuthentication);
+    final var firstUser = httpUserMe(firstAuthentication);
+    final var secondUser = httpUserMe(secondAuthentication);
     
     // then
     Assert.assertNotNull(firstUser);
@@ -68,8 +64,8 @@ class ApiControllerTest {
     final var inGameName = "Andrzej Duda";
     
     // when
-    httpSetInGameName(authentication, inGameName);
-    final var user = httpMe(authentication);
+    httpUserSetInGameName(authentication, inGameName);
+    final var user = httpUserMe(authentication);
     
     // then
     Assert.assertNotNull(user);
@@ -83,8 +79,12 @@ class ApiControllerTest {
     final var hostUserAuthentication = createAuthentication();
     final var firstGuestUserAuthentication = createAuthentication();
     final var secondGuestUserAuthentication = createAuthentication();
+    httpUserSetInGameName(hostUserAuthentication, "host");
+    httpUserSetInGameName(firstGuestUserAuthentication, "first");
+    httpUserSetInGameName(secondGuestUserAuthentication, "second");
     
-    final var availableRoomsBeforeCreation = httpFetchRooms(hostUserAuthentication);
+    
+    final var availableRoomsBeforeCreation = httpRoomAll(hostUserAuthentication);
 
     // when
     final var roomId = httpCreateRoomReturningId(hostUserAuthentication);
@@ -93,12 +93,12 @@ class ApiControllerTest {
     Assert.assertNotNull("Created room id is null", roomId);
     
     // when
-    final var availableRoomsAfterCreation = httpFetchRooms(hostUserAuthentication);
+    final var availableRoomsAfterCreation = httpRoomAll(hostUserAuthentication);
     
     Assert.assertEquals(availableRoomsBeforeCreation.size() + 1, availableRoomsAfterCreation.size());
 
     // when
-    var roomDetails = httpRegisterToAndGetRoomDetails(firstGuestUserAuthentication, roomId);
+    var roomDetails = httpRoomRegisterToAndGetRoomDetails(firstGuestUserAuthentication, roomId);
 
     // then
     Assert.assertNotNull("roomDetails is null", roomDetails);
@@ -109,12 +109,13 @@ class ApiControllerTest {
     final var roomUpdateTimestampBeforeSecondUserHasBeenRegistered = roomDetails.getUpdateTimestamp();
     
     // when
-    roomDetails = httpRegisterToAndGetRoomDetails(secondGuestUserAuthentication, roomId);
+    roomDetails = httpRoomRegisterToAndGetRoomDetails(secondGuestUserAuthentication, roomId);
 
     // then
     Assert.assertNotNull("roomDetails is null", roomDetails);
     Assert.assertEquals(roomId, roomDetails.getId());
     Assert.assertEquals(2, roomDetails.getGuests().size());
+    Assert.assertEquals(2, roomDetails.getGuests().stream().filter(RoomMemberPojo::isOnline).count());
 
     // given
     final var roomUpdateTimestampAfterSecondUserHasBeenRegistered = roomDetails.getUpdateTimestamp();
@@ -123,24 +124,47 @@ class ApiControllerTest {
     Assert.assertTrue(roomUpdateTimestampAfterSecondUserHasBeenRegistered > roomUpdateTimestampBeforeSecondUserHasBeenRegistered);
 
     // when
-    // 3 missed pings should kick a user
+    // 3 missed pings should mark guest as offline
     Long lastPingedRoomUpdateTimestamp = null;
     for (var i = 0; i < 4; i++) {
-      httpPingReturningUpdateTimestamp(hostUserAuthentication, roomId);
-      lastPingedRoomUpdateTimestamp = httpPingReturningUpdateTimestamp(firstGuestUserAuthentication, roomId);
+      httpRoomPingReturningUpdateTimestamp(hostUserAuthentication, roomId);
+      lastPingedRoomUpdateTimestamp = httpRoomPingReturningUpdateTimestamp(firstGuestUserAuthentication, roomId);
 
       Thread.sleep(100l); // ping interval, see class annotations
     }
     
-    roomDetails = httpRegisterToAndGetRoomDetails(hostUserAuthentication, roomId);
+    roomDetails = httpRoomRegisterToAndGetRoomDetails(hostUserAuthentication, roomId);
 
     // then
-    // has second guest been kicked?
+    // has second guest been marked as offline
+    Assert.assertNotNull("roomDetails is null", roomDetails);
+    Assert.assertEquals(roomId, roomDetails.getId());
+    Assert.assertEquals(2, roomDetails.getGuests().size());
+    Assert.assertEquals(1, roomDetails.getGuests().stream().filter(RoomMemberPojo::isOnline).count());
+    Assert.assertTrue(roomDetails.getUpdateTimestamp() > roomUpdateTimestampAfterSecondUserHasBeenRegistered);
+    Assert.assertEquals(lastPingedRoomUpdateTimestamp, roomDetails.getUpdateTimestamp());
+    
+    // when
+    httpRoomLeave(secondGuestUserAuthentication, roomId);
+    roomDetails = httpRoomRegisterToAndGetRoomDetails(hostUserAuthentication, roomId);
+
+    // then
     Assert.assertNotNull("roomDetails is null", roomDetails);
     Assert.assertEquals(roomId, roomDetails.getId());
     Assert.assertEquals(1, roomDetails.getGuests().size());
-    Assert.assertTrue(roomDetails.getUpdateTimestamp() > roomUpdateTimestampAfterSecondUserHasBeenRegistered);
-    Assert.assertEquals(lastPingedRoomUpdateTimestamp, roomDetails.getUpdateTimestamp());
+    
+    // when
+    httpRoomCloseOwnedByCurrentUser(hostUserAuthentication);
+    roomDetails = httpRoomRegisterToAndGetRoomDetails(hostUserAuthentication, roomId);
+
+    // then
+    Assert.assertNull("roomDetails is null", roomDetails);
+
+    // when
+    final var availableRoomsAfterRemoving = httpRoomAll(hostUserAuthentication);
+    
+    // then
+    Assert.assertEquals(availableRoomsBeforeCreation.size(), availableRoomsAfterRemoving.size());
   }
 
   private Long httpCreateRoomReturningId(Authentication hostUserAuthentication) throws Exception {
@@ -157,7 +181,7 @@ class ApiControllerTest {
     return Long.valueOf(
       mvc
         .perform(
-          post("/api/create_room")
+          post("/api/room/create_returning_id")
             .content(objectMapper.writeValueAsString(roomDraft))
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .with(authentication(hostUserAuthentication))
@@ -171,11 +195,37 @@ class ApiControllerTest {
     );
   }
 
-  private UserPojo httpMe(Authentication authentication) throws Exception {
+  private void httpRoomCloseOwnedByCurrentUser(Authentication authentication) throws Exception {
+    mvc
+      .perform(
+        delete("/api/room/close_owned_by_current_user")
+          .with(authentication(authentication))
+      )
+      .andExpect(
+        status().isOk()
+      )
+      .andReturn()
+      .getResponse();
+  }
+
+  private void httpRoomLeave(Authentication authentication, Long roomId) throws Exception {
+    mvc
+      .perform(
+        delete("/api/room/leave?id=" + roomId)
+          .with(authentication(authentication))
+      )
+      .andExpect(
+        status().isOk()
+      )
+      .andReturn()
+      .getResponse();
+  }
+
+  private UserPojo httpUserMe(Authentication authentication) throws Exception {
     return objectMapper.readValue(
       mvc
         .perform(
-          get("/api/me")
+          get("/api/user/me")
             .with(authentication(authentication))
         )
         .andExpect(
@@ -187,10 +237,10 @@ class ApiControllerTest {
       UserPojo.class
     );
   }
-  private void httpSetInGameName(Authentication authentication, String inGameName) throws Exception {
+  private void httpUserSetInGameName(Authentication authentication, String inGameName) throws Exception {
     mvc
       .perform(
-        post("/api/in_game_name")
+        post("/api/user/in_game_name")
           .content(inGameName)
           .contentType(MediaType.APPLICATION_JSON_VALUE)
           .with(authentication(authentication))
@@ -201,11 +251,11 @@ class ApiControllerTest {
       .andReturn();
   }
   
-  private RoomDetails httpRegisterToAndGetRoomDetails(Authentication authentication, Long roomId) throws Exception {
-    return objectMapper.readValue(
+  private RoomDetails httpRoomRegisterToAndGetRoomDetails(Authentication authentication, Long roomId) throws Exception {
+    final var responseJson =
       mvc
         .perform(
-          post("/api/register_to_and_get_details?id=" + roomId)
+          post("/api/room/register_to_and_get_details?id=" + roomId)
             .with(authentication(authentication))
         )
         .andExpect(
@@ -213,16 +263,18 @@ class ApiControllerTest {
         )
         .andReturn()
           .getResponse()
-          .getContentAsString(),
-      RoomDetails.class
-    );
+          .getContentAsString();
+
+    return responseJson == null || responseJson.isEmpty()
+      ? null
+      : objectMapper.readValue(responseJson, RoomDetails.class);
   }
 
-  private List<IdentifiedRoomPojo> httpFetchRooms(Authentication authentication) throws Exception {
+  private List<IdentifiedRoomPojo> httpRoomAll(Authentication authentication) throws Exception {
     return objectMapper.readValue(
       mvc
         .perform(
-          get("/api/rooms?game=" + GAME + "&platform=" + PLATFORM)
+          get("/api/room/all?game=" + GAME + "&platform=" + PLATFORM)
             .with(authentication(authentication))
         )
         .andExpect(
@@ -235,11 +287,11 @@ class ApiControllerTest {
     );
   }
   
-  private Long httpPingReturningUpdateTimestamp(Authentication authentication, Long roomId) throws Exception {
+  private Long httpRoomPingReturningUpdateTimestamp(Authentication authentication, Long roomId) throws Exception {
     return Long.valueOf(
       mvc
         .perform(
-          post("/api/ping_returning_update_timestamp?id=" + roomId)
+          post("/api/room/ping_returning_update_timestamp?id=" + roomId)
             .with(authentication(authentication))
         )
         .andExpect(
@@ -261,5 +313,4 @@ class ApiControllerTest {
     authentication.setDetails(details);
     return authentication;
   }
-
 }

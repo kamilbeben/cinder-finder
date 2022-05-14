@@ -57,18 +57,21 @@ public class RoomServiceImpl implements RoomService {
     final var room = getById(id);
     final var currentUser = userService.getCurrentUser();
 
-    removeCurrentUserFromOtherRooms(currentUser, room);
+    if (room != null) {
+      removeCurrentUserFromOtherRooms(currentUser, room);
 
-    if (!isCurrentUserIsAMemberOfThisRoom(room, currentUser))
-      room.addGuest(currentUser);
+      if (!isCurrentUserIsAMemberOfThisRoom(room, currentUser))
+        room.addGuest(currentUser);
 
-    pingReturningUpdateTimestamp(room.getId());
-    kickInactiveUsers(room);
+      pingReturningUpdateTimestamp(room.getId());
+      updateIsOnlineFlagOnAllUsers(room);
+    }
+
     return room;
   }
 
   @Override
-  public Long createNewRoom(RoomDraftPojo roomDraft) {
+  public Long createRoomReturningId(RoomDraftPojo roomDraft) {
     closeRoomOwnedByCurrentUser();
     final var room = new RoomDetails(nextId(), userService.getCurrentUser(), roomDraft);
     room.setId(nextId());
@@ -98,27 +101,33 @@ public class RoomServiceImpl implements RoomService {
     if (!isCurrentUserIsAMemberOfThisRoom(room, currentUser))
       room.addGuest(currentUser);
 
-    kickInactiveUsers(room, userNameToPingTimestamp);
+    updateIsOnlineFlagOnAllUsers(room, userNameToPingTimestamp);
 
     return room.getUpdateTimestamp();
   }
+
+  @Override
+  public void leaveRoom(Long roomId) {
+    Optional
+      .ofNullable(getById(roomId))
+      .ifPresent(room -> room.removeGuestByUserName(userService.getCurrentUser().getUserName()));
+  }
   
-  private void kickInactiveUsers(RoomDetails room) {
-    kickInactiveUsers(
+  private void updateIsOnlineFlagOnAllUsers(RoomDetails room) {
+    updateIsOnlineFlagOnAllUsers(
       room,
       roomIdToUserNameToPingTimestamp.computeIfAbsent(room.getId(), key -> new ConcurrentHashMap<>())
     );
   }
 
-  private void kickInactiveUsers(RoomDetails room, Map<String, Long> userNameToPingTimestamp) {
+  private void updateIsOnlineFlagOnAllUsers(RoomDetails room, Map<String, Long> userNameToPingTimestamp) {
 
-    final var minActivePingTimestamp = System.currentTimeMillis() - 3 * pingInterval.toMillis();
-    
+    final var minPingTimestampForUserToBeConsideredOnline = System.currentTimeMillis() - (3 * pingInterval.toMillis());
+
     userNameToPingTimestamp
-      .forEach((userName, pingTimestap) -> {
-        if (minActivePingTimestamp > pingTimestap)
-          room.removeGuestByUserName(userName);
-      });
+      .forEach((userName, pingTimestamp) ->
+        room.updateIsOnlineFlagByUserName(userName, minPingTimestampForUserToBeConsideredOnline < pingTimestamp)
+      );
   }
 
   private RoomDetails getById(Long id) {

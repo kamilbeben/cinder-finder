@@ -12,9 +12,11 @@ public interface RoomService {
   List<? extends IdentifiedRoomPojo> getActive(Game game, Platform platform);
   RoomDetails registerToAndGetDetails(Long id);
 
-  Long createNewRoom(RoomDraftPojo room);
+  Long createRoomReturningId(RoomDraftPojo room);
 
   void closeRoomOwnedByCurrentUser();
 
   Long pingReturningUpdateTimestamp(Long id);
+
+  void leaveRoom(Long roomId);
 }
