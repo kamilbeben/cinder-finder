@@ -18,10 +18,9 @@ import static lombok.AccessLevel.PRIVATE;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = PRIVATE)
-public class RoomPojo implements Serializable {
+public class RoomDraftPojo implements Serializable {
   private static final long serialVersionUID = 8308428558849036961L;
 
-  Long id;
   Game game;
   Platform platform;
   RoomType type;
@@ -31,6 +30,5 @@ public class RoomPojo implements Serializable {
   String password;
 
   String locationId;
-  String hostNickname;
-  
+
 }
