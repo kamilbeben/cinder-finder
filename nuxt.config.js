@@ -24,7 +24,7 @@ export default {
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
-    
+    '~/plugins/ApiSessionIdSettingAxiosInterceptor'
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
@@ -44,7 +44,9 @@ export default {
     '@nuxtjs/axios',
     // https://go.nuxtjs.dev/pwa
     '@nuxtjs/pwa',
-    '@nuxtjs/i18n'
+    '@nuxtjs/i18n',
+    '@nuxtjs/toast',
+    'cookie-universal-nuxt'
   ],
 
   i18n: {
@@ -58,11 +60,15 @@ export default {
     }
   },
 
-  // Axios module configuration: https://go.nuxtjs.dev/config-axios
-  // https://axios.nuxtjs.org/options
+  // Axios module configuration: https://go.nuxtjs.dev/config-axios, https://axios.nuxtjs.org/options
   axios: {
-    // Used as fallback if no runtime config is provided
     proxy: true,
+    proxyHeaders: true,
+    debug: !true,
+    credentials: true,
+    // retry: {
+      // retries: 3
+    // }
   },
 
   proxy: {
@@ -73,6 +79,12 @@ export default {
     proxy: {
       '/api/': process.env.EE_MATCHMAKER_SERVER_URL
     }
+  },
+
+  toast: {
+      position: 'bottom-left',
+      className: 'toast-message',
+      duration: 5000
   },
 
   // PWA module configuration: https://go.nuxtjs.dev/pwa
