@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pl.beben.ermatchmaker.domain.Game;
 import pl.beben.ermatchmaker.domain.Platform;
+import pl.beben.ermatchmaker.domain.RoomType;
 import pl.beben.ermatchmaker.pojo.IdentifiedRoomPojo;
 import pl.beben.ermatchmaker.pojo.RoomDetails;
 import pl.beben.ermatchmaker.pojo.RoomDraftPojo;
@@ -27,8 +28,13 @@ public class ApiController {
   }
 
   @PostMapping("/user/in_game_name")
-  public void setInGameName(@RequestBody String inGameName) {
+  public void setInGameName(@RequestParam("value") String inGameName) {
     userService.setInGameName(inGameName);
+  }
+
+  @PostMapping("/user/last_selected_platform")
+  public void setInGameName(@RequestParam("value") Platform lastSelectedPlatform) {
+    userService.setLastSelectedPlatform(lastSelectedPlatform);
   }
 
   @PostMapping("/room/register_to_and_get_details")
@@ -46,21 +52,30 @@ public class ApiController {
     return roomService.createRoomReturningId(room);
   }
 
-  @DeleteMapping("/room/close_owned_by_current_user")
-  public void removeRoom() {
-    roomService.closeRoomOwnedByCurrentUser();
-  }
-
   @DeleteMapping("/room/leave")
   public void leaveRoom(@RequestParam("id") Long id) {
     roomService.leaveRoom(id);
   }
 
+  @DeleteMapping("/room/owned_by_current_user/close")
+  public void removeRoom() {
+    roomService.closeRoomOwnedByCurrentUser();
+  }
+  
+  @DeleteMapping("/room/owned_by_current_user/kick_guest")
+  public void kickGuest(@RequestParam("guest_user_name") String guestUserName) {
+    roomService.kickGuestFromRoomOwnerByCurrentUser(guestUserName);
+  }
+
   @GetMapping("/room/all")
-  public List<? extends IdentifiedRoomPojo> getActiveRooms(@RequestParam("game") Game game,
-                                                           @RequestParam("platform") Platform platform) {
+  public List<? extends IdentifiedRoomPojo> getActiveRooms(@RequestParam(name = "game") Game game,
+                                                           @RequestParam(name = "platform") Platform platform,
+                                                           @RequestParam(name = "host_query", required = false) String hostQuery,
+                                                           @RequestParam(name = "room_query", required = false) String roomQuery,
+                                                           @RequestParam(name = "room_type", required = false) List<RoomType> roomTypes,
+                                                           @RequestParam(name = "location_ids", required = false) List<String> locationIds) {
     
-    return roomService.getActive(game, platform);
+    return roomService.getActive(game, platform, hostQuery, roomQuery, roomTypes, locationIds);
   }
   
 }

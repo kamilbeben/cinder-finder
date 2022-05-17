@@ -1,5 +1,6 @@
 package pl.beben.ermatchmaker.service;
 
+import pl.beben.ermatchmaker.domain.Platform;
 import pl.beben.ermatchmaker.pojo.UserPojo;
 
 public interface UserService {
@@ -8,4 +9,6 @@ public interface UserService {
   UserPojo getCurrentUser();
 
   void setInGameName(String inGameName);
+
+  void setLastSelectedPlatform(Platform platform);
 }

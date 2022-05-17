@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
+import pl.beben.ermatchmaker.domain.Platform;
 
 import static lombok.AccessLevel.PRIVATE;
 
@@ -17,5 +18,6 @@ public class UserPojo {
 
   String userName; // unique
   String inGameName;
+  Platform lastSelectedPlatform;
 
 }

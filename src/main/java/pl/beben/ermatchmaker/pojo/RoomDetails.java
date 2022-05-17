@@ -19,6 +19,7 @@ public class RoomDetails extends IdentifiedRoomPojo {
   private static final long serialVersionUID = 5668632899628063985L;
 
   Long updateTimestamp;
+  List<ChatMessage> messages = new ArrayList<>();
   List<RoomMemberPojo> guests = new ArrayList<>();
 
   public RoomDetails(Long id, UserPojo host, RoomDraftPojo draft) {
@@ -63,6 +64,11 @@ public class RoomDetails extends IdentifiedRoomPojo {
 
     if (userWasInGuestsList)
       refreshUpdateTimestamp();
+  }
+  
+  public void addMessage(ChatMessage message) {
+    messages.add(message);
+    refreshUpdateTimestamp();
   }
   
   private void refreshUpdateTimestamp() {

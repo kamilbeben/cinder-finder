@@ -3,6 +3,7 @@ package pl.beben.ermatchmaker.service;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Service;
+import pl.beben.ermatchmaker.domain.Platform;
 import pl.beben.ermatchmaker.pojo.UserPojo;
 
 import java.util.Map;
@@ -17,7 +18,7 @@ public class UserServiceImpl implements UserService {
   public UserPojo getOrCreateUserBySessionId(String sessionId) {
     return sessionIdToUser.computeIfAbsent(
       sessionId,
-      key -> new UserPojo("guest_" + nextId(), null)
+      key -> new UserPojo("guest_" + nextId(), null, null)
     );
   }
   
@@ -33,6 +34,12 @@ public class UserServiceImpl implements UserService {
   public void setInGameName(String inGameName) {
     getCurrentUser()
       .setInGameName(inGameName);
+  }
+
+  @Override
+  public void setLastSelectedPlatform(Platform lastSelectedPlatform) {
+    getCurrentUser()
+      .setLastSelectedPlatform(lastSelectedPlatform);
   }
 
   private static long idSequence = (long) 1e4;

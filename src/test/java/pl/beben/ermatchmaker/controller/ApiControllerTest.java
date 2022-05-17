@@ -29,7 +29,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
-@SpringBootTest(properties = "matchmaker.room-ping-interval=100ms")
+@SpringBootTest(properties = {
+  "matchmaker.room.ping-interval=100ms",
+  "matchmaker.room.kick-after=600ms"
+})
 class ApiControllerTest {
 
   private static final String PLATFORM = Platform.PSX.name();
@@ -132,7 +135,6 @@ class ApiControllerTest {
 
       Thread.sleep(100l); // ping interval, see class annotations
     }
-    
     roomDetails = httpRoomRegisterToAndGetRoomDetails(hostUserAuthentication, roomId);
 
     // then
@@ -143,9 +145,15 @@ class ApiControllerTest {
     Assert.assertEquals(1, roomDetails.getGuests().stream().filter(RoomMemberPojo::isOnline).count());
     Assert.assertTrue(roomDetails.getUpdateTimestamp() > roomUpdateTimestampAfterSecondUserHasBeenRegistered);
     Assert.assertEquals(lastPingedRoomUpdateTimestamp, roomDetails.getUpdateTimestamp());
-    
+
     // when
-    httpRoomLeave(secondGuestUserAuthentication, roomId);
+    // another 3 missed pings should kick that guest
+    for (var i = 0; i < 4; i++) {
+      httpRoomPingReturningUpdateTimestamp(hostUserAuthentication, roomId);
+      httpRoomPingReturningUpdateTimestamp(firstGuestUserAuthentication, roomId);
+
+      Thread.sleep(100l); // ping interval, see class annotations
+    }
     roomDetails = httpRoomRegisterToAndGetRoomDetails(hostUserAuthentication, roomId);
 
     // then
@@ -153,6 +161,15 @@ class ApiControllerTest {
     Assert.assertEquals(roomId, roomDetails.getId());
     Assert.assertEquals(1, roomDetails.getGuests().size());
     
+    // when
+    httpRoomLeave(firstGuestUserAuthentication, roomId);
+    roomDetails = httpRoomRegisterToAndGetRoomDetails(hostUserAuthentication, roomId);
+
+    // then
+    Assert.assertNotNull("roomDetails is null", roomDetails);
+    Assert.assertEquals(roomId, roomDetails.getId());
+    Assert.assertEquals(0, roomDetails.getGuests().size());
+
     // when
     httpRoomCloseOwnedByCurrentUser(hostUserAuthentication);
     roomDetails = httpRoomRegisterToAndGetRoomDetails(hostUserAuthentication, roomId);
@@ -198,7 +215,7 @@ class ApiControllerTest {
   private void httpRoomCloseOwnedByCurrentUser(Authentication authentication) throws Exception {
     mvc
       .perform(
-        delete("/api/room/close_owned_by_current_user")
+        delete("/api/room/owned_by_current_user/close")
           .with(authentication(authentication))
       )
       .andExpect(
@@ -240,9 +257,7 @@ class ApiControllerTest {
   private void httpUserSetInGameName(Authentication authentication, String inGameName) throws Exception {
     mvc
       .perform(
-        post("/api/user/in_game_name")
-          .content(inGameName)
-          .contentType(MediaType.APPLICATION_JSON_VALUE)
+        post("/api/user/in_game_name?value=" + inGameName)
           .with(authentication(authentication))
       )
       .andExpect(
