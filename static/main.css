@@ -20,13 +20,12 @@
 
 .page-default {
   height: inherit;
-  max-height: 70vh;
   margin: auto;
   width: 100%;
   max-width: 500px;
   display: flex;
   flex-direction: column;
-  outline-offset: -.5em;
+  overflow: hidden;
 }
 
 .button-group {
@@ -37,4 +36,42 @@
 .button-group > * {
   flex: 1 1 auto;
   width: auto;
+}
+
+.toast-message {
+  font-family: "Roboto", sans-serif;
+}
+
+.muted {
+  font-size: .8em;
+  opacity: .8;
+}
+
+.list {
+  height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+.list > div, .list > a {
+  background: #21252964;
+  padding: .25em .5em;
+  margin-top: .5em;
+}
+
+.pointer, .pointer * {
+  cursor: pointer;
+}
+
+.clear-css-nuxt-link {
+  color: unset !important;
+  text-decoration: unset !important;
+}
+
+.checkbox-group .v-messages {
+  display: none;
+}
+
+.checkbox-group .v-input__slot {
+  margin-bottom: 0;
 }

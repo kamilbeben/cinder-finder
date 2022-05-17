@@ -1,5 +1,6 @@
 
 enum LocationType {
+  AREA = 'AREA',
   BOSS = 'BOSS'
 }
 

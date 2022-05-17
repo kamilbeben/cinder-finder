@@ -1,0 +1,302 @@
+<template>
+  <div
+    v-if="!room"
+    class="page-default"
+  >
+    <div 
+      class="not-found mx-auto my-auto d-flex flex-column"
+    >
+      <v-icon
+        class="mx-auto text-h1"
+        v-text="'mdi-emoticon-sad'"
+      />
+      <div
+        class="mx-auto mt-4 text-h7"
+        v-text="$t('room.not-found')"
+      />
+      <a @click="() => $router.back()" v-text="$t('room.go-back')"/>
+      
+    </div>
+  </div>
+  <div
+    v-else
+    class="page-default"
+  >
+
+    <div
+      class="room-name"
+      v-text="room.name"
+    />
+
+    <div
+      class="muted"
+      v-text="room.description"
+    />
+
+    <div
+      class="muted mt-4"
+      v-text="$t('common.location')"
+    />
+    <a
+      class="location d-flex"
+      :href="locationGoogleSearchHref"
+      target="_blank"
+    >
+      <v-icon
+        class="my-auto"
+        v-text="'mdi-google-downasaur'"
+      />
+      <div
+        class="location-name ml-2 my-auto"
+        v-text="`${location.name} (${location.groupName})`"
+      />
+      <v-icon
+        class="my-auto ml-2"
+        v-text="'mdi-search-web'"
+      />
+    </a>
+    
+    <div
+      class="muted mt-4"
+      v-text="$t('common.password')"
+    />
+    <div
+      class="passowrd"
+      v-text="room.password"
+    />
+
+    <div
+      class="muted mt-4"
+      v-text="$t('room.members')"
+    />
+
+    <div class="list">
+      <div
+        v-if="members.length === 0"
+        class="muted px-4 py-2"
+        v-text="$t('room.members-placeholder')"
+      />
+      <div
+        v-for="member in members"
+        :key="member.userName"
+        class="member d-flex"
+      >
+        <v-icon
+          :color="
+            member.isOnline
+              ? 'green'
+              : 'red'
+          "
+          :title="$t(
+            room.host.userName === member.userName
+              ? 'room.host'
+              : 'room.guest'
+          )"
+          v-text="
+            room.host.userName === member.userName
+              ? 'mdi-crown'
+              : 'mdi-web'
+          "
+        />
+        <div class="d-flex ml-2 flex-column py-1">
+          <div
+            class="in-game-name mt-auto"
+            :class="{
+              'unset': !member.inGameName
+            }"
+            v-text="member.inGameName || $t('room.in-game-name-placeholder')"
+          />
+          <div
+            class="muted"
+            v-text="member.userName"
+          />
+        </div>
+        <v-btn
+          v-if="false && roomIsOwnedByLoggedUser && room.host.userName !== member.userName"
+          color="error"
+          class="ml-auto"
+          :title="$t('room.kick')"
+          @click="() => kickUser(member)"
+        >
+          <v-icon v-text="'mdi-karate'"/>
+        </v-btn>
+      </div>
+    </div>
+
+    <!-- 
+    ## Chat
+      - [ timestamp ] Author
+                      Message
+    -->
+
+      <div class="mt-4 d-flex">
+        <v-btn
+          class="ml-auto"
+          color="error"
+          @click="leave"
+        >
+          {{ $t(roomIsOwnedByLoggedUser ? 'room.close' : 'room.leave') }}
+        </v-btn>
+      </div>
+
+  </div>
+</template>
+
+
+<script lang="ts">
+
+import GameAwarePageMixin from '~/mixin/GameAwarePageMixin'
+import LoggedUserAwarePageMixin, { asyncData as LoggedUserAwarePageMixinAsyncData } from '~/mixin/LoggedUserAwarePageMixin'
+
+import { Component, mixins, Watch } from 'nuxt-property-decorator'
+import { Context } from '@nuxt/types'
+
+import Location, { LocationId } from '~/domain/Location'
+import GameToLocations from '~/static/GameToLocations'
+
+import RoomDetails from '~/domain/RoomDetails'
+import User from '~/domain/User'
+import RoomMember from '~/domain/RoomMember'
+
+@Component({
+  name: 'RoomDetailsPage',
+  components: {
+    
+  }
+})
+export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUserAwarePageMixin) {
+
+  private room ?: RoomDetails = undefined
+
+  protected async asyncData (context : Context) : Promise<any> {
+
+    return {
+      ...(await LoggedUserAwarePageMixinAsyncData(context)),
+      room: await context.$axios.$post<RoomDetails>(`/api/room/register_to_and_get_details?id=${context.params.id}`)
+    }
+  }
+
+  private get roomIsOwnedByLoggedUser () : boolean {
+    return this.user?.userName === this.room?.host.userName
+  }
+
+  private get members () : RoomMember[] {
+    return [
+      this.room?.host!,
+      ...this.room?.guests!
+    ]
+      .filter(member => member.userName !== this.user?.userName)
+  }
+
+  private get location () : Location {
+    return this.locations.find(location => location.id === this.room!.locationId)!
+  }
+
+  private get locationGoogleSearchHref () : string {
+    const queryText = `${this.lowercaseGame.replace(/_/g, ' ')} ${this.location.groupName} ${this.location.name}`
+    return `https://www.google.com/search?q=${encodeURIComponent(queryText)}`
+  }
+
+  private get locations () : Location[] {
+    return GameToLocations.get(this.game!)!
+  }
+
+  private async kickUser (member : User) : Promise<void> {
+    try {
+      await this.$axios.$delete<void>(`/api/room/owned_by_current_user/kick_guest?guest_user_name=${encodeURIComponent(member.userName)}`)
+      this.room!.guests = this.room!.guests
+        .filter(guest => guest.userName !== member.userName)
+    } catch (error) {
+      console.error('kickUser', error)
+    }
+  }
+
+  private leave () : void {
+    this.$router.push(
+      this.lowercaseGame
+        ? `/${this.lowercaseGame}/${
+            this.roomIsOwnedByLoggedUser
+              ? 'create_room'
+              : 'rooms'
+          }`
+        : '/'
+    )
+  }
+
+  private async beforeRouteLeave (to : any, from : any, next : any) : Promise<void> {
+    clearTimeout(this.pingTimeoutId)
+
+    try {
+      if (this.roomIsOwnedByLoggedUser)
+        await this.$axios.$delete<void>('/api/room/owned_by_current_user/close')
+      else
+        await this.$axios.$delete<void>(`/api/room/leave?id=${this.room?.id}`)
+    } finally {
+      next()
+    }
+  }
+
+  private pingTimeoutId : number = 0
+
+  protected beforeDestroy () : void {
+    clearTimeout(this.pingTimeoutId)
+  }
+
+  protected mounted () : void {
+
+console.error('TODO client', [
+  'try-catch every asyncData & redirect to custom error page or an interceptor redirecting on error if process.server',
+  'custom error page 404',
+  'custom error api request'
+])
+
+    const pingIntervalInMs = 3000
+
+    const doPing = () => {
+      if (this.room)
+        this.$axios.$post<number>(`/api/room/ping_returning_update_timestamp?id=${this.room!.id}`)
+          .then(updateTimestamp => {
+            if (updateTimestamp > this.room!.updateTimestamp)
+              return this.$axios.$post<RoomDetails>(`/api/room/register_to_and_get_details?id=${this.room!.id}`)
+                .then(room => this.$set(this, 'room', room))
+          })
+          .catch(error => {
+            console.error('PING Error', error)
+          })
+          .finally(() => {
+            this.pingTimeoutId = <any> setTimeout(doPing, pingIntervalInMs)
+          })
+      else
+        this.pingTimeoutId = <any> setTimeout(doPing, pingIntervalInMs)
+    }
+
+    doPing()
+  }
+
+}
+</script>
+
+<style scoped>
+
+  .room-name {
+    font-size: 1.3em;
+  }
+
+  .location {
+    text-decoration: none;
+    color: unset;
+  }
+
+  .in-game-name {
+    font-size: .9em;
+  }
+
+  .in-game-name.unset {
+    opacity: .5;
+  }
+
+  .member {
+    line-height: .9em;
+  }
+
+</style>

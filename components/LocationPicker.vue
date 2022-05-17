@@ -2,40 +2,59 @@
   <v-autocomplete
     :value="value"
     @input="val => $emit('input', val)"
-    :label="$t('create-room.form.location')"
+    :label="$t('common.location')"
     :items="locations"
+    :multiple="multiple"
+    :chips="multiple"
     class="locations-autocomplete"
     item-text="name"
     item-value="id"
   >
     <template v-slot:selection="data">
+      <v-chip
+        v-if="multiple"
+        v-bind="data.attrs"
+        close
+        @click:close="() => deselect(data.item.id)"
+        :input-value="data.selected"
+      >
+        <div
+          class="text-truncate"
+          v-text="`${data.item.name} (${data.item.groupName})`"
+        />
+      </v-chip>
       <div
+        v-else
         class="location-selection"
         v-text="`${data.item.name} (${data.item.groupName})`"
       />
     </template>
+
     <template v-slot:item="data">
-      <div class="location">
-        <div
-          class="icon"
-          :title="$t('location-type.' + data.item.type)"
-        >
-          <v-icon
-            v-if="data.item.type === 'BOSS'"
-            v-text="'mdi-ladybug'"
-          />
-        </div>
-        <div class="name-and-group-name">
-          <div
-            class="name"
-            v-text="data.item.name"
-          />
-          <div
-            class="group-name"
-            v-text="data.item.groupName"
-          />
-        </div>
-      </div>
+
+      <!-- type -->
+      <v-list-item-avatar>
+        <v-icon
+          v-if="data.item.type === 'BOSS'"
+          v-text="'mdi-google-downasaur'"
+        />
+      </v-list-item-avatar>
+
+      <!-- name -->
+      <v-list-item-content>
+        <v-list-item-title v-html="data.item.name"></v-list-item-title>
+        <v-list-item-subtitle v-html="data.item.groupName"></v-list-item-subtitle>
+      </v-list-item-content>
+
+      <!-- select action -->
+      <v-list-item-action
+        v-if="multiple"
+      >
+        <v-checkbox
+          :input-value="(value || []).includes(data.item.id)"
+          color="deep-purple accent-4"
+        />
+      </v-list-item-action>
     </template>
   </v-autocomplete>
 </template>
@@ -53,42 +72,25 @@ import GameToLocations from '~/static/GameToLocations'
 })
 export default class LocationPicker extends Vue {
 
-  @Prop()
-  private readonly value !: LocationId
+  @Prop([ String, Array ])
+  private readonly value !: LocationId | LocationId[]
 
   @Prop({ type: String, required: true })
   private readonly game !: Game
+
+  @Prop(Boolean)
+  private readonly multiple !: boolean
+
+  @Prop(Boolean)
+  private readonly clearable !: boolean
 
   private get locations () : Location[] {
     return GameToLocations.get(this.game)!
   }
 
+  private deselect (locationId : LocationId) : void {
+    (<string[]> this.value).splice(this.value.indexOf(locationId), 1)
+  }
+
 }
 </script>
-
-<style scoped>
-
-  .location {
-    display: flex;
-  }
-
-  .location > .icon {
-    display: flex;
-    width: 2em;
-  }
-
-  .location > .icon > i {
-    margin: auto;
-  }
-
-  .location > .name-and-group-name {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .location > .name-and-group-name > .group-name {
-    font-size: .9em;
-    opacity: .7;
-  }
-
-</style>

@@ -6,24 +6,9 @@
       ref="form"
     >
       
-      <label
-        class="button-group-label"
-        v-text="$t('create-room.form.platform')"
-      />
-      <v-btn-toggle
+      <platform-picker
         v-model="platform"
-        class="button-group"
-      >
-          <v-btn value="PSX">
-            <v-icon v-text="'mdi-sony-playstation'"/>
-          </v-btn>
-          <v-btn value="XBOX">
-            <v-icon v-text="'mdi-microsoft-xbox'"/>
-          </v-btn>
-          <v-btn value="PC">
-            <v-icon v-text="'mdi-laptop'"/>
-          </v-btn>
-      </v-btn-toggle>
+      />
 
       <v-messages
         class="mt-2"
@@ -31,21 +16,9 @@
         :value="paltformErrorMessages"
       />
 
-      <label
-        class="button-group-label"
-        v-text="$t('create-room.form.type')"
-      />
-      <v-btn-toggle
+      <room-type-picker
         v-model="roomType"
-        class="button-group"
-      >
-        <v-btn value="COOP">
-          <v-icon v-text="'mdi-handshake'"/>
-        </v-btn>
-        <v-btn value="PVP">
-          <v-icon v-text="'mdi-fencing'"/>
-        </v-btn>
-      </v-btn-toggle>
+      />
 
       <v-messages
         class="mt-2"
@@ -54,13 +27,13 @@
       />
 
       <location-picker
-        v-model="roomDefinition.locationId"
+        v-model="roomDraft.locationId"
         :game="game"
       />
 
       <v-text-field
-        v-model="roomDefinition.name"
-        :label="$t('create-room.form.name')"
+        v-model="roomDraft.name"
+        :label="$t('common.room-name')"
         :rules="[
           RuleFactory.isRequired(),
           RuleFactory.maxLength(50)
@@ -69,8 +42,8 @@
       />
 
       <v-text-field
-        v-model="roomDefinition.description"
-        :label="$t('create-room.form.description')"
+        v-model="roomDraft.description"
+        :label="$t('create-room.description')"
         :rules="[
           RuleFactory.maxLength(150)
         ]"
@@ -78,9 +51,9 @@
       />
 
       <v-text-field
-        :value="roomDefinition.password"
+        :value="roomDraft.password"
         @input="onPasswordInput"
-        :label="$t('create-room.form.password')"
+        :label="$t('common.password')"
         :rules="[
           RuleFactory.isRequired(),
           RuleFactory.maxLength(10),
@@ -90,9 +63,8 @@
       />
 
       <v-text-field
-        :value="roomDefinition.hostNickname"
-        @input="onHostNickNameInput"
-        :label="$t('create-room.form.host-nickname')"
+        v-model="user.inGameName"
+        :label="$t('create-room.in-game-name')"
         :rules="[
           RuleFactory.isRequired(),
           RuleFactory.maxLength(50),
@@ -104,16 +76,17 @@
       <div class="mt-4 flex equal-width margin-between-sm">
         <v-btn
           color="success"
+          :loading="submitActionIsInProgress"
           @click="submit"
         >
-          {{ $t('create-room.form.submit') }}
+          {{ $t('create-room.submit') }}
         </v-btn>
 
         <v-btn
           color="error"
           @click="cancel"
         >
-          {{ $t('create-room.form.cancel') }}
+          {{ $t('create-room.cancel') }}
         </v-btn>
       </div>
 
@@ -125,112 +98,122 @@
 <script lang="ts">
 
 import GameAwarePageMixin from '~/mixin/GameAwarePageMixin'
+import LoggedUserAwarePageMixin from '~/mixin/LoggedUserAwarePageMixin'
+
 import { Component, mixins, Ref, Vue } from 'nuxt-property-decorator'
 
 import LocationPicker from '~/components/LocationPicker.vue'
+import PlatformPicker from '~/components/PlatformPicker.vue'
+import RoomTypePicker from '~/components/RoomTypePicker.vue'
 
 import RuleFactory from '~/service/RuleFactory'
-import { Context } from '@nuxt/types'
 
 import Platform from '~/domain/Platform'
-import RoomDefinition from '~/domain/RoomDefinition'
+import RoomDraft from '~/domain/RoomDraft'
 import RoomType from '~/domain/RoomType'
+import User from '~/domain/User'
 
 const STATE_LOCAL_STORAGE_KEY = 'CreateRoomState'
 
 @Component({
   name: 'CreateRoomPage',
   components: {
-    LocationPicker
+    LocationPicker,
+    PlatformPicker,
+    RoomTypePicker
   }
 })
-export default class CreateRoomPage extends mixins(GameAwarePageMixin) {
+export default class CreateRoomPage extends mixins(GameAwarePageMixin, LoggedUserAwarePageMixin) {
 
   private readonly RuleFactory = new RuleFactory(this)
 
   @Ref('form')
-  private formRef !: Vue
+  private readonly formRef !: Vue
 
-  private roomDefinition : RoomDefinition = {  
+  private roomDraft : RoomDraft = {  
     platform: undefined,
     type: undefined,
     name: undefined,
     description: undefined,
     password: undefined,
-    hostNickname: undefined,
     locationId: undefined
   }
-
+  
   private formIsValid : boolean = false
+  private submitActionIsInProgress : boolean = false
   private paltformErrorMessages : string[] = []
   private roomTypeErrorMessages : string[] = []
 
-  private async asyncData (context : Context) : Promise<any> {
-    return {
-      
-    }
-  }
-
   private get platform () : Platform | undefined {
-    return this.roomDefinition.platform
+    return this.roomDraft.platform
   }
 
   private set platform (value : Platform | undefined) {
-    if (value)
+    if (value) {
       this.paltformErrorMessages = []
+      this.user!.lastSelectedPlatform = value
+    }
 
-    this.roomDefinition.platform = value
+    this.roomDraft.platform = value
     this.persistState()
   }
 
   private get roomType () : RoomType | undefined {
-    return this.roomDefinition.type
+    return this.roomDraft.type
   }
 
   private set roomType (value : RoomType | undefined) {
     if (value)
       this.roomTypeErrorMessages = []
 
-    this.roomDefinition.type = value
+    this.roomDraft.type = value
     this.persistState()
   }
 
   private onPasswordInput (value : string) : void {
-    this.roomDefinition.password = value
-    this.persistState()
-  }
-
-  private onHostNickNameInput (value : string) : void {
-    this.roomDefinition.hostNickname = value
+    this.roomDraft.password = value
     this.persistState()
   }
 
   private cancel () : void {
-    this.$router.push(this.game ? `/${this.lowercaseGame}` : '/')
+    this.$router.push(`/${this.lowercaseGame}`)
   }
 
-  private submit () : void {
+  private async submit () : Promise<void> {
     
     // @ts-ignore
     this.formRef.validate()
 
-    if (!this.roomDefinition.platform) {
+    if (!this.roomDraft.platform) {
       this.paltformErrorMessages = [ <string> this.$t('validation-rule.field-is-required') ]
       this.formIsValid = false
     }
 
-    if (!this.roomDefinition.type) {
+    if (!this.roomDraft.type) {
       this.roomTypeErrorMessages = [ <string> this.$t('validation-rule.field-is-required') ]
       this.formIsValid = false
+    }
+
+    if (!this.formIsValid)
+      return
+    
+    this.submitActionIsInProgress = true
+    try {
+      const roomId : number = await this.$axios.$post<number>('/api/room/create_returning_id', this.roomDraft)
+      this.$router.push(`/${this.lowercaseGame}/room/${roomId}`)
+    } catch (error) {
+      console.error('Couldn\'t create room', error)
+      this.$nuxt.$toast.error(<string> this.$t('error.network'))
+    } finally {
+      this.submitActionIsInProgress = false
     }
   }
 
   private persistState () : void {
     localStorage[STATE_LOCAL_STORAGE_KEY] = JSON.stringify({
-      platform: this.roomDefinition.platform,
-      type: this.roomDefinition.type,
-      password: this.roomDefinition.password,
-      hostNickname: this.roomDefinition.hostNickname
+      platform: this.roomDraft.platform,
+      type: this.roomDraft.type,
+      password: this.roomDraft.password
     })
   }
 
@@ -241,16 +224,20 @@ export default class CreateRoomPage extends mixins(GameAwarePageMixin) {
       return
 
     try {
-      const localStorageState : RoomDefinition = JSON.parse(stringifiedLocalStorageState)
+      const localStorageState : RoomDraft = JSON.parse(stringifiedLocalStorageState)
 
       Object.entries(localStorageState)
-        .filter(([key, value]) => this.roomDefinition.hasOwnProperty(key))
-        .forEach(([key, value]) => this.$set(this.roomDefinition, key, value))
+        .filter(([key, value]) => this.roomDraft.hasOwnProperty(key))
+        .forEach(([key, value]) => this.$set(this.roomDraft, key, value))
 
     } catch (error) {
       delete localStorage[STATE_LOCAL_STORAGE_KEY]
       console.error('Couldn\'t restore persisted state', error)
     }
+  }
+
+  protected mounted () : void {
+    this.restoreState()
   }
 
 }

@@ -23,7 +23,7 @@ export default class GameAwarePageMixin extends Vue {
       this.$router.push('/')
 
     // @ts-ignore
-    window[this.$options.name] = this
+    window.MatchmakerPage = this
   }
 
 }

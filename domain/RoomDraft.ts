@@ -1,9 +1,10 @@
 
 import RoomType from './RoomType'
 import Platform from './Platform'
+import User from './User'
 import { LocationId } from '~/domain/Location'
 
-type RoomDefinition = {
+type RoomDraft = {
 
   platform ?: Platform
   type ?: RoomType
@@ -14,7 +15,6 @@ type RoomDefinition = {
 
   locationId ?: LocationId
 
-  hostNickname ?: string
 }
 
-export default RoomDefinition
+export default RoomDraft
