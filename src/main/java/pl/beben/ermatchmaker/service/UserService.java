@@ -8,6 +8,8 @@ public interface UserService {
 
   UserPojo getCurrentUser();
 
+  UserPojo getByUserName(String userName);
+
   void setInGameName(String inGameName);
 
   void setLastSelectedPlatform(Platform platform);

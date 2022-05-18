@@ -3,6 +3,7 @@ package pl.beben.ermatchmaker.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.async.DeferredResult;
 import pl.beben.ermatchmaker.domain.Game;
 import pl.beben.ermatchmaker.domain.Platform;
 import pl.beben.ermatchmaker.domain.RoomType;
@@ -10,12 +11,17 @@ import pl.beben.ermatchmaker.pojo.IdentifiedRoomPojo;
 import pl.beben.ermatchmaker.pojo.RoomDetails;
 import pl.beben.ermatchmaker.pojo.RoomDraftPojo;
 import pl.beben.ermatchmaker.pojo.UserPojo;
+import pl.beben.ermatchmaker.pojo.event.AbstractEvent;
+import pl.beben.ermatchmaker.pojo.event.IdentifiedRoomEvent;
+import pl.beben.ermatchmaker.pojo.event.UserEvent;
 import pl.beben.ermatchmaker.service.utils.QueryUtils;
 
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import static pl.beben.ermatchmaker.pojo.event.AbstractEvent.Type;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +41,8 @@ public class RoomServiceImpl implements RoomService {
   private Duration kickAfter;
   
   private final Map<Long, Map<String, Long>> roomIdToUserNameToPingTimestamp = new ConcurrentHashMap<>();
+  private final Map<Long, Set<DeferredResult<List<AbstractEvent>>>> roomIdToEventSubscribers = new ConcurrentHashMap<>();
+  private final Set<DeferredResult<List<AbstractEvent>>> generalEventSubscribers = new HashSet<>();
 
   private final List<RoomDetails> rooms = Collections.synchronizedList(new ArrayList<>(
     Arrays.asList(
@@ -50,6 +58,18 @@ public class RoomServiceImpl implements RoomService {
       new RoomDetails(nextId(), testUser2, new RoomDraftPojo(Game.ELDEN_RING, Platform.XBOX, RoomType.COOP, "Fifth room", "Help plz", "ghzx", "Demi-Human Chief (Limgrave)"))
     )
   ));
+  
+  @Override
+  public void subscribeToRoomEvent(Long roomId, DeferredResult<List<AbstractEvent>> deferredResult) {
+    roomIdToEventSubscribers
+      .computeIfAbsent(roomId, key -> new HashSet<>())
+      .add(deferredResult);
+  }
+  
+  @Override
+  public void subscribeToGeneralEvent(DeferredResult<List<AbstractEvent>> deferredResult) {
+    generalEventSubscribers.add(deferredResult);
+  }
   
   @Override
   public List<? extends IdentifiedRoomPojo> getActive(Game game, Platform platform, String hostQuery, String roomQuery, List<RoomType> roomTypes, List<String> locationIds) {
@@ -90,10 +110,12 @@ public class RoomServiceImpl implements RoomService {
     if (room != null) {
       removeCurrentUserFromOtherRooms(currentUser, room);
 
-      if (!isCurrentUserIsAMemberOfThisRoom(room, currentUser))
+      if (!isCurrentUserIsAMemberOfThisRoom(room, currentUser)) {
+        publishRoomEvent(id, new UserEvent(Type.USER_HAS_JOINED, currentUser));
         room.addGuest(currentUser);
+      }
 
-      pingReturningUpdateTimestamp(room.getId());
+      ping(room.getId());
       updateIsOnlineFlagOnAllUsers(room);
     }
 
@@ -109,6 +131,7 @@ public class RoomServiceImpl implements RoomService {
     final var room = new RoomDetails(nextId(), currentUser, roomDraft);
     room.setId(nextId());
     this.rooms.add(room);
+    publishGeneralEvent(new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_CREATED, room));
     return room.getId();
   }
 
@@ -118,36 +141,44 @@ public class RoomServiceImpl implements RoomService {
     getRoomOwnedByCurrentUser()
       .ifPresent(room -> {
         rooms.remove(room);
+        publishGeneralEvent(new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_REMOVED, room));
       });
   }
 
   @Override
   public void kickGuestFromRoomOwnerByCurrentUser(String guestUserName) {
     getRoomOwnedByCurrentUser()
-      .ifPresent(room -> room.removeGuestByUserName(guestUserName));
+      .ifPresent(room -> {
+        if (room.removeGuestByUserName(guestUserName))
+          publishRoomEvent(room.getId(), new UserEvent(Type.USER_HAS_LEFT, userService.getByUserName(guestUserName)));
+      });
   }
 
   @Override
-  public Long pingReturningUpdateTimestamp(Long id) {
+  public void ping(Long id) {
     final var currentUser = userService.getCurrentUser();
     final var room = getById(id);
     
     final var userNameToPingTimestamp = roomIdToUserNameToPingTimestamp.computeIfAbsent(id, key -> new ConcurrentHashMap<>());
     userNameToPingTimestamp.put(currentUser.getUserName(), System.currentTimeMillis());
 
-    if (!isCurrentUserIsAMemberOfThisRoom(room, currentUser))
+    if (!isCurrentUserIsAMemberOfThisRoom(room, currentUser)) {
+      publishRoomEvent(id, new UserEvent(Type.USER_HAS_JOINED, currentUser));
       room.addGuest(currentUser);
+    }
 
     updateIsOnlineFlagOnAllUsers(room, userNameToPingTimestamp);
-
-    return room.getUpdateTimestamp();
   }
 
   @Override
   public void leaveRoom(Long roomId) {
     Optional
       .ofNullable(getById(roomId))
-      .ifPresent(room -> room.removeGuestByUserName(userService.getCurrentUser().getUserName()));
+      .ifPresent(room -> {
+        final var currentUser = userService.getCurrentUser();
+        if (room.removeGuestByUserName(currentUser.getUserName()))
+          publishRoomEvent(roomId, new UserEvent(Type.USER_HAS_LEFT, currentUser));
+      });
   }
 
   private Optional<RoomDetails> getRoomOwnedByCurrentUser() {
@@ -166,16 +197,32 @@ public class RoomServiceImpl implements RoomService {
   private void updateIsOnlineFlagOnAllUsers(RoomDetails room, Map<String, Long> userNameToPingTimestamp) {
 
     final var lowerPingTimestampLimitForUserToBeKickedOut = System.currentTimeMillis() - kickAfter.toMillis();
-    final var lowerPingTimestampLimitForUserToBeConsideredOnline = System.currentTimeMillis() - (3 * pingInterval.toMillis());
+    final var lowerPingTimestampLimitForUserToBeConsideredOnline = System.currentTimeMillis() - (2 * pingInterval.toMillis());
+    
+    final var events = new ArrayList<AbstractEvent>();
 
     userNameToPingTimestamp
       .forEach((userName, pingTimestamp) -> {
+        final var user = userService.getByUserName(userName);
+        final var userIsOnline = lowerPingTimestampLimitForUserToBeConsideredOnline < pingTimestamp;
+        final var userShouldBeKickedOut = !Objects.equals(userName, room.getHost().getUserName()) && lowerPingTimestampLimitForUserToBeKickedOut >= pingTimestamp;
 
-        room.updateIsOnlineFlagByUserName(userName, lowerPingTimestampLimitForUserToBeConsideredOnline < pingTimestamp);
+        if (room.updateIsOnlineFlagByUserName(userName, userIsOnline))
+          events.add(
+            new UserEvent(
+              userIsOnline
+                ? Type.USER_IS_ONLINE
+                : Type.USER_IS_OFFLINE,
+              user
+            ));
         
-        if (!Objects.equals(userName, room.getHost().getUserName()) && lowerPingTimestampLimitForUserToBeKickedOut >= pingTimestamp)
-          room.removeGuestByUserName(userName);
+        if (userShouldBeKickedOut) {
+          if (room.removeGuestByUserName(user.getUserName()))
+            events.add(new UserEvent(Type.USER_HAS_LEFT, user));
+        }
       });
+    
+    publishRoomEvent(room.getId(), events);
   }
 
   private RoomDetails getById(Long id) {
@@ -195,7 +242,36 @@ public class RoomServiceImpl implements RoomService {
   private void removeCurrentUserFromOtherRooms(UserPojo currentUser, RoomDetails currentRoom) {
     rooms.stream()
       .filter(room -> currentRoom == null || !Objects.equals(room.getId(), currentRoom.getId()))
-      .forEach(room -> room.removeGuestByUserName(currentUser.getUserName()));
+      .forEach(room -> {
+        if (room.removeGuestByUserName(currentUser.getUserName()))
+          publishRoomEvent(room.getId(), new UserEvent(Type.USER_HAS_LEFT, currentUser));
+      });
+  }
+  
+  private void publishGeneralEvent(AbstractEvent event) {
+    publishGeneralEvent(Arrays.asList(event));
+  }
+
+  private void publishGeneralEvent(List<AbstractEvent> events) {
+    final var eventSubscribers = new HashSet<>(generalEventSubscribers);
+    
+    generalEventSubscribers.clear();
+    eventSubscribers.forEach(deferredResult -> deferredResult.setResult(events));
+  }
+  
+  private void publishRoomEvent(Long roomId, AbstractEvent event) {
+    publishRoomEvent(roomId, Arrays.asList(event));
+  }
+
+  private void publishRoomEvent(Long roomId, List<AbstractEvent> events) {
+    if (events == null || events.isEmpty())
+      return;
+
+    final var originalEventSubscribers = roomIdToEventSubscribers.computeIfAbsent(roomId, key -> new HashSet<>());
+    final var eventSubscribers = new HashSet<>(originalEventSubscribers);
+
+    originalEventSubscribers.clear();
+    eventSubscribers.forEach(deferredResult -> deferredResult.setResult(events));
   }
 
   private static long idSequence = (long) 1e4;

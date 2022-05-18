@@ -7,6 +7,7 @@ import pl.beben.ermatchmaker.domain.Platform;
 import pl.beben.ermatchmaker.pojo.UserPojo;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -28,6 +29,14 @@ public class UserServiceImpl implements UserService {
       ((WebAuthenticationDetails) SecurityContextHolder.getContext().getAuthentication().getDetails())
         .getSessionId()
     );
+  }
+  
+  @Override
+  public UserPojo getByUserName(String userName) {
+    return sessionIdToUser.values().stream()
+      .filter(user -> Objects.equals(user.getUserName(), userName))
+      .findAny()
+      .orElse(null);
   }
 
   @Override

@@ -2,6 +2,7 @@ package pl.beben.ermatchmaker.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.async.DeferredResult;
 import pl.beben.ermatchmaker.domain.Game;
 import pl.beben.ermatchmaker.domain.Platform;
 import pl.beben.ermatchmaker.domain.RoomType;
@@ -9,6 +10,7 @@ import pl.beben.ermatchmaker.pojo.IdentifiedRoomPojo;
 import pl.beben.ermatchmaker.pojo.RoomDetails;
 import pl.beben.ermatchmaker.pojo.RoomDraftPojo;
 import pl.beben.ermatchmaker.pojo.UserPojo;
+import pl.beben.ermatchmaker.pojo.event.AbstractEvent;
 import pl.beben.ermatchmaker.service.RoomService;
 import pl.beben.ermatchmaker.service.UserService;
 
@@ -21,7 +23,7 @@ public class ApiController {
 
   private final RoomService roomService;
   private final UserService userService;
-
+  
   @GetMapping("/user/me")
   public UserPojo getLoggedUser() {
     return userService.getCurrentUser();
@@ -42,9 +44,9 @@ public class ApiController {
     return roomService.registerToAndGetDetails(id);
   }
 
-  @PostMapping("/room/ping_returning_update_timestamp")
-  public Long pingReturningUpdateTimestamp(@RequestParam("id") Long id) {
-    return roomService.pingReturningUpdateTimestamp(id);
+  @PostMapping("/room/ping")
+  public void pingReturningUpdateTimestamp(@RequestParam("id") Long id) {
+    roomService.ping(id);
   }
 
   @PostMapping("/room/create_returning_id")
@@ -78,4 +80,17 @@ public class ApiController {
     return roomService.getActive(game, platform, hostQuery, roomQuery, roomTypes, locationIds);
   }
   
+  @GetMapping("/room/all/subscribe_to_event")
+  public DeferredResult<List<AbstractEvent>> subscribeToGeneralEvent() {
+    final var result = new DeferredResult<List<AbstractEvent>>();
+    roomService.subscribeToGeneralEvent(result);
+    return result;
+  }
+
+  @GetMapping("/room/subscribe_to_event")
+  public DeferredResult<List<AbstractEvent>> subscribeToRoomEvent(@RequestParam("id") Long id) {
+    final var result = new DeferredResult<List<AbstractEvent>>();
+    roomService.subscribeToRoomEvent(id, result);
+    return result;
+  }
 }

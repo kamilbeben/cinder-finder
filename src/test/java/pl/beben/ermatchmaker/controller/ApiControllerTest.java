@@ -15,11 +15,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import pl.beben.ermatchmaker.domain.Game;
 import pl.beben.ermatchmaker.domain.Platform;
 import pl.beben.ermatchmaker.domain.RoomType;
 import pl.beben.ermatchmaker.pojo.*;
+import pl.beben.ermatchmaker.pojo.event.AbstractEvent;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +44,7 @@ class ApiControllerTest {
   @Autowired MockMvc mvc;
 
   final ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-  
+
   @Test
   public void fetchMeTest() throws Exception {
     
@@ -73,6 +76,45 @@ class ApiControllerTest {
     // then
     Assert.assertNotNull(user);
     Assert.assertEquals(inGameName, user.getInGameName());
+  }
+
+  @Test
+  public void userJoinedThenLeftTestUsingLongPolling() throws Exception {
+    
+  }
+
+  @Test
+  public void chatMessagesEventsTestUsingLongPolling() throws Exception {
+    
+  }
+
+  @Test
+  public void generalLongPollingPerformanceTest() throws Exception {
+    // given
+    final var subscribers = new ArrayList<ResultActions>();
+
+    // let's hope that server can handle that many subscribers
+    for (var i = 0; i < 1e4; i++)
+      subscribers.add(
+        mvc
+          .perform(
+            get("/api/room/all/subscribe_to_event")
+              .with(authentication(createAuthentication()))
+          ));
+    
+    // this will trigger ROOM_HAS_BEEN_CREATED event
+    httpCreateRoomReturningId(createAuthentication());
+
+    for (ResultActions subscriber : subscribers) {
+      final var events = (List<AbstractEvent>)
+        subscriber
+          .andExpect(status().isOk())
+          .andReturn()
+            .getAsyncResult();
+      
+      Assert.assertEquals(1, events.size());
+      Assert.assertEquals(AbstractEvent.Type.ROOM_HAS_BEEN_CREATED, events.get(0).getType());
+    }
   }
 
   @Test
@@ -127,11 +169,10 @@ class ApiControllerTest {
     Assert.assertTrue(roomUpdateTimestampAfterSecondUserHasBeenRegistered > roomUpdateTimestampBeforeSecondUserHasBeenRegistered);
 
     // when
-    // 3 missed pings should mark guest as offline
-    Long lastPingedRoomUpdateTimestamp = null;
-    for (var i = 0; i < 4; i++) {
-      httpRoomPingReturningUpdateTimestamp(hostUserAuthentication, roomId);
-      lastPingedRoomUpdateTimestamp = httpRoomPingReturningUpdateTimestamp(firstGuestUserAuthentication, roomId);
+    // 2 missed pings should mark guest as offline
+    for (var i = 0; i < 3; i++) {
+      httpRoomPing(hostUserAuthentication, roomId);
+      httpRoomPing(firstGuestUserAuthentication, roomId);
 
       Thread.sleep(100l); // ping interval, see class annotations
     }
@@ -144,13 +185,12 @@ class ApiControllerTest {
     Assert.assertEquals(2, roomDetails.getGuests().size());
     Assert.assertEquals(1, roomDetails.getGuests().stream().filter(RoomMemberPojo::isOnline).count());
     Assert.assertTrue(roomDetails.getUpdateTimestamp() > roomUpdateTimestampAfterSecondUserHasBeenRegistered);
-    Assert.assertEquals(lastPingedRoomUpdateTimestamp, roomDetails.getUpdateTimestamp());
 
     // when
     // another 3 missed pings should kick that guest
     for (var i = 0; i < 4; i++) {
-      httpRoomPingReturningUpdateTimestamp(hostUserAuthentication, roomId);
-      httpRoomPingReturningUpdateTimestamp(firstGuestUserAuthentication, roomId);
+      httpRoomPing(hostUserAuthentication, roomId);
+      httpRoomPing(firstGuestUserAuthentication, roomId);
 
       Thread.sleep(100l); // ping interval, see class annotations
     }
@@ -302,20 +342,17 @@ class ApiControllerTest {
     );
   }
   
-  private Long httpRoomPingReturningUpdateTimestamp(Authentication authentication, Long roomId) throws Exception {
-    return Long.valueOf(
-      mvc
-        .perform(
-          post("/api/room/ping_returning_update_timestamp?id=" + roomId)
-            .with(authentication(authentication))
-        )
-        .andExpect(
-          status().isOk()
-        )
-        .andReturn()
-        .getResponse()
-        .getContentAsString()
-    );
+  private void httpRoomPing(Authentication authentication, Long roomId) throws Exception {
+    mvc
+      .perform(
+        post("/api/room/ping?id=" + roomId)
+          .with(authentication(authentication))
+      )
+      .andExpect(
+        status().isOk()
+      )
+      .andReturn()
+      .getResponse();
   }
 
   private Authentication createAuthentication () {
