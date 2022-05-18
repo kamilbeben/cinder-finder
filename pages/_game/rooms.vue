@@ -152,6 +152,7 @@
 
 import GameAwarePageMixin from '~/mixin/GameAwarePageMixin'
 import LoggedUserAwarePageMixin, { asyncData as LoggedUserAwarePageMixinAsyncData } from '~/mixin/LoggedUserAwarePageMixin'
+import WindowFocusAwareMixin from '~/mixin/WindowFocusAwareMixin'
 import { Component, mixins, Ref, Vue, Watch } from 'nuxt-property-decorator'
 
 import PlatformPicker from '~/components/PlatformPicker.vue'
@@ -160,6 +161,9 @@ import LocationPicker from '~/components/LocationPicker.vue'
 
 import Location, { LocationId } from '~/domain/Location'
 import GameToLocations from '~/static/GameToLocations'
+
+import LongPoller from '~/service/LongPoller'
+import LongPollingEvent, { Type as LongPollingEventType } from '~/domain/LongPollingEvent'
 
 import IdentifiedRoom from '~/domain/IdentifiedRoom'
 import { Context } from '@nuxt/types'
@@ -231,13 +235,17 @@ async function fetchRooms (
     RoomTypePicker
   }
 })
-export default class RoomsPage extends mixins(GameAwarePageMixin, LoggedUserAwarePageMixin) {
+export default class RoomsPage extends mixins(GameAwarePageMixin, LoggedUserAwarePageMixin, WindowFocusAwareMixin) {
+
+
+  private longPoller ?: LongPoller<LongPollingEvent<User | any>[]> = undefined
 
   private filterMenuIsExpanded : boolean = false
   private selectedRoomTypes : RoomType[] = [ RoomType.COOP, RoomType.PVP ]
   private selectedLocationIds : string[]  = []
   private hostQuery : string = ''
   private roomQuery : string = ''
+  private updateTimestamp : number | null = null
   private rooms : IdentifiedRoomWithLocation[] = []
 
   protected async asyncData (context : Context) : Promise<any> {
@@ -283,6 +291,39 @@ export default class RoomsPage extends mixins(GameAwarePageMixin, LoggedUserAwar
     this.hostQuery = ''
     this.roomQuery = ''
     this.closeFilterMenu()
+  }
+
+  protected onWindowFocus () : void {
+    this.$nextTick(() => this.doFilter())
+  }
+
+  private consumeLongPollingEvents (events : LongPollingEvent<IdentifiedRoom>[]) : void {
+    events.forEach(event => {
+      const room = event.payload
+      switch (event.type) {
+        case LongPollingEventType.ROOM_HAS_BEEN_CREATED:
+        case LongPollingEventType.ROOM_HAS_BEEN_REMOVED:
+          // TODO subscribe to those only
+          if (room.game === this.game && room.platform === this.user?.lastSelectedPlatform)
+            this.doFilter()
+          return
+        default:
+          throw new Error('Unhandled LongPollingEventType.' + event.type)
+      }
+    })
+  }
+
+  protected beforeDestroy () : void {
+    this.longPoller?.unsubscribe()    
+  }
+
+  protected mounted () {
+    this.longPoller = new LongPoller<LongPollingEvent<IdentifiedRoom>[]>(
+      this.$axios,
+      `/api/room/all/subscribe_to_event`,
+      events => this.consumeLongPollingEvents(events)
+    )
+
   }
 
 }

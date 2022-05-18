@@ -1,5 +1,5 @@
 <template>
-  <v-app dark>
+  <v-app xdark>
 
     <v-navigation-drawer
       v-model="drawerIsVisible"
@@ -77,6 +77,18 @@ export default class DefaultLayout extends Vue {
   ]
 
   private title : string = this.$tc('toolbar.title')
+
+  private mounted () {
+    const previousWindowOnFocus = window.onfocus
+
+    window.onfocus = function () {
+      if (previousWindowOnFocus)
+        // @ts-ignore
+        previousWindowOnFocus.call(this, arguments)
+
+      document.dispatchEvent(new CustomEvent('window.onfocus'))
+    }
+  }
 
 }
 </script>

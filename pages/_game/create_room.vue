@@ -131,6 +131,7 @@ export default class CreateRoomPage extends mixins(GameAwarePageMixin, LoggedUse
   private readonly formRef !: Vue
 
   private roomDraft : RoomDraft = {  
+    game: undefined,
     platform: undefined,
     type: undefined,
     name: undefined,
@@ -199,6 +200,7 @@ export default class CreateRoomPage extends mixins(GameAwarePageMixin, LoggedUse
     
     this.submitActionIsInProgress = true
     try {
+      this.roomDraft.game = this.game!;
       const roomId : number = await this.$axios.$post<number>('/api/room/create_returning_id', this.roomDraft)
       this.$router.push(`/${this.lowercaseGame}/room/${roomId}`)
     } catch (error) {
@@ -210,6 +212,9 @@ export default class CreateRoomPage extends mixins(GameAwarePageMixin, LoggedUse
   }
 
   private persistState () : void {
+    if (process.server)
+      return
+
     localStorage[STATE_LOCAL_STORAGE_KEY] = JSON.stringify({
       platform: this.roomDraft.platform,
       type: this.roomDraft.type,

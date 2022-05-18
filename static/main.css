@@ -1,4 +1,18 @@
 
+html, body {
+  overflow: hidden !important;
+}
+
+html,
+body,
+body > #__nuxt,
+body > #__nuxt > #__layout,
+body > #__nuxt > #__layout > .v-application,
+body > #__nuxt > #__layout > .v-application > .v-application--wrap {
+  min-height: 100%;
+  height: 100%;
+}
+
 .flex.equal-width {
   display: flex;
   flex-wrap: nowrap;

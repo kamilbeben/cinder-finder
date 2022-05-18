@@ -147,12 +147,16 @@
 
 import GameAwarePageMixin from '~/mixin/GameAwarePageMixin'
 import LoggedUserAwarePageMixin, { asyncData as LoggedUserAwarePageMixinAsyncData } from '~/mixin/LoggedUserAwarePageMixin'
+import WindowFocusAwareMixin from '~/mixin/WindowFocusAwareMixin'
 
 import { Component, mixins, Watch } from 'nuxt-property-decorator'
 import { Context } from '@nuxt/types'
 
-import Location, { LocationId } from '~/domain/Location'
+import Location from '~/domain/Location'
 import GameToLocations from '~/static/GameToLocations'
+
+import LongPoller from '~/service/LongPoller'
+import LongPollingEvent, { Type as LongPollingEventType } from '~/domain/LongPollingEvent'
 
 import RoomDetails from '~/domain/RoomDetails'
 import User from '~/domain/User'
@@ -164,8 +168,9 @@ import RoomMember from '~/domain/RoomMember'
     
   }
 })
-export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUserAwarePageMixin) {
+export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUserAwarePageMixin, WindowFocusAwareMixin) {
 
+  private longPoller ?: LongPoller<LongPollingEvent<User | any>[]> = undefined
   private room ?: RoomDetails = undefined
 
   protected async asyncData (context : Context) : Promise<any> {
@@ -223,7 +228,52 @@ export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUs
     )
   }
 
+  protected onWindowFocus () : void {  
+    this.$axios.$post<RoomDetails>(`/api/room/register_to_and_get_details?id=${this.room!.id}`)
+      .then(room => this.$set(this, 'room', room))
+  }
+
+  private consumeLongPollingEvents (events : LongPollingEvent<User | any>[]) : void {
+    let
+      user : User,
+      message : any
+
+    events.forEach(event => {
+      switch (event.type) {
+        case LongPollingEventType.CHAT_MESSAGE:
+          message = event.payload
+          console.log('chat message', message)
+          return
+        case LongPollingEventType.USER_HAS_JOINED:
+          user = event.payload
+          const userIsAlreadyAGuest = !!this.room?.guests.find(guest => guest.userName === user.userName)
+          if (!userIsAlreadyAGuest)
+            this.room?.guests.push({
+              ...user,
+              isOnline: true
+            })
+          return
+        case LongPollingEventType.USER_HAS_LEFT:
+          user = event.payload
+          const indexOfUserInGuests = this.room?.guests.findIndex(guest => guest.userName === user.userName)
+          if (indexOfUserInGuests !== -1)
+            this.room?.guests.splice(indexOfUserInGuests!, 1)
+          return
+        case LongPollingEventType.USER_IS_ONLINE:
+        case LongPollingEventType.USER_IS_OFFLINE:
+          user = event.payload
+          this.members
+            .filter(member => member.userName === user.userName)
+            .forEach(member => { member.isOnline = event.type === LongPollingEventType.USER_IS_ONLINE })
+          return
+        default:
+          throw new Error('Unhandled LongPollingEventType.' + event.type)
+      }
+    })
+  }
+
   private async beforeRouteLeave (to : any, from : any, next : any) : Promise<void> {
+    this.longPoller?.unsubscribe()
     clearTimeout(this.pingTimeoutId)
 
     try {
@@ -239,30 +289,28 @@ export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUs
   private pingTimeoutId : number = 0
 
   protected beforeDestroy () : void {
+    this.longPoller?.unsubscribe()
     clearTimeout(this.pingTimeoutId)
   }
 
   protected mounted () : void {
+    this.longPoller = new LongPoller<LongPollingEvent<User | any>[]>(
+      this.$axios,
+      `/api/room/subscribe_to_event?id=${this.room!.id}`,
+      events => this.consumeLongPollingEvents(events)
+    )
 
-console.error('TODO client', [
-  'try-catch every asyncData & redirect to custom error page or an interceptor redirecting on error if process.server',
-  'custom error page 404',
-  'custom error api request'
-])
+    console.error('TODO client', [
+      'try-catch every asyncData & redirect to custom error page or an interceptor redirecting on error if process.server',
+      'custom error page 404',
+      'custom error api request'
+    ])
 
-    const pingIntervalInMs = 3000
+    const pingIntervalInMs = 10_000
 
     const doPing = () => {
       if (this.room)
-        this.$axios.$post<number>(`/api/room/ping_returning_update_timestamp?id=${this.room!.id}`)
-          .then(updateTimestamp => {
-            if (updateTimestamp > this.room!.updateTimestamp)
-              return this.$axios.$post<RoomDetails>(`/api/room/register_to_and_get_details?id=${this.room!.id}`)
-                .then(room => this.$set(this, 'room', room))
-          })
-          .catch(error => {
-            console.error('PING Error', error)
-          })
+        this.$axios.$post<void>(`/api/room/ping?id=${this.room!.id}`)
           .finally(() => {
             this.pingTimeoutId = <any> setTimeout(doPing, pingIntervalInMs)
           })
