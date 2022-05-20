@@ -13,21 +13,25 @@ import java.util.List;
 
 public interface RoomService {
 
-  void subscribeToRoomEvent(Long roomId, DeferredResult<List<AbstractEvent>> deferredResult);
-
-  void subscribeToGeneralEvent(Game game, Platform platform, DeferredResult<List<AbstractEvent>> deferredResult);
-
-  List<? extends IdentifiedRoomPojo> getActive(Game game, Platform platform, String hostQuery, String roomQuery, List<RoomType> roomTypes, List<String> locationIds);
-
-  RoomDetails registerToAndGetDetails(Long id);
-
+  // specific room
   Long createRoomReturningId(RoomDraftPojo room);
 
   void closeRoomOwnedByCurrentUser();
+
+  RoomDetails registerToAndGetDetails(Long id);
+
+  void subscribeToRoomEvent(Long roomId, DeferredResult<List<AbstractEvent>> deferredResult);
 
   void kickGuestFromRoomOwnerByCurrentUser(String guestUserName);
 
   void ping(Long id);
 
-  void leaveRoom(Long roomId);
+  void leave(Long id);
+
+  void addMessage(Long roomId, String content);
+
+  // all rooms
+  List<IdentifiedRoomPojo> searchRooms(Game game, Platform platform, String hostQuery, String roomQuery, List<RoomType> roomTypes, List<String> locationIds);
+
+  void subscribeToGeneralEvent(Game game, Platform platform, DeferredResult<List<AbstractEvent>> deferredResult);
 }

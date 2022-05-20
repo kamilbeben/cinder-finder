@@ -7,11 +7,9 @@ import org.springframework.web.context.request.async.DeferredResult;
 import pl.beben.ermatchmaker.domain.Game;
 import pl.beben.ermatchmaker.domain.Platform;
 import pl.beben.ermatchmaker.domain.RoomType;
-import pl.beben.ermatchmaker.pojo.IdentifiedRoomPojo;
-import pl.beben.ermatchmaker.pojo.RoomDetails;
-import pl.beben.ermatchmaker.pojo.RoomDraftPojo;
-import pl.beben.ermatchmaker.pojo.UserPojo;
+import pl.beben.ermatchmaker.pojo.*;
 import pl.beben.ermatchmaker.pojo.event.AbstractEvent;
+import pl.beben.ermatchmaker.pojo.event.ChatMessageEvent;
 import pl.beben.ermatchmaker.pojo.event.IdentifiedRoomEvent;
 import pl.beben.ermatchmaker.pojo.event.UserEvent;
 import pl.beben.ermatchmaker.service.utils.QueryUtils;
@@ -58,23 +56,114 @@ public class RoomServiceImpl implements RoomService {
       new RoomDetails(nextId(), testUser2, new RoomDraftPojo(Game.ELDEN_RING, Platform.XBOX, RoomType.COOP, "Fifth room", "Help plz", "ghzx", "Demi-Human Chief (Limgrave)"))
     )
   ));
-  
+
+  // specific room
+
+  @Override
+  public Long createRoomReturningId(RoomDraftPojo roomDraft) {
+    final var currentUser = userService.getCurrentUser();
+    closeRoomOwnedByCurrentUser();
+    removeCurrentUserFromOtherRooms(currentUser, null);
+
+    final var room = new RoomDetails(nextId(), currentUser, roomDraft);
+    room.setId(nextId());
+    this.rooms.add(room);
+    publishGeneralEvent(room, new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_CREATED, room));
+    return room.getId();
+  }
+
+  @Override
+  public void closeRoomOwnedByCurrentUser() {
+
+    getRoomOwnedByCurrentUser()
+      .ifPresent(room -> {
+        rooms.remove(room);
+        publishGeneralEvent(room, new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_REMOVED, room));
+      });
+  }
+
+  @Override
+  public RoomDetails registerToAndGetDetails(Long id) {
+
+    final var room = getById(id);
+    final var currentUser = userService.getCurrentUser();
+
+    if (room != null) {
+      removeCurrentUserFromOtherRooms(currentUser, room);
+
+      if (!isCurrentUserIsAMemberOfThisRoom(room, currentUser)) {
+        publishRoomEvent(id, new UserEvent(Type.USER_HAS_JOINED, currentUser));
+        room.addGuest(currentUser);
+      }
+
+      ping(room.getId());
+      updateIsOnlineFlagOnAllUsers(room);
+    }
+
+    return room;
+  }
+
   @Override
   public void subscribeToRoomEvent(Long roomId, DeferredResult<List<AbstractEvent>> deferredResult) {
     roomIdToEventSubscribers
       .computeIfAbsent(roomId, key -> new HashSet<>())
       .add(deferredResult);
   }
-  
+
   @Override
-  public void subscribeToGeneralEvent(Game game, Platform platform, DeferredResult<List<AbstractEvent>> deferredResult) {
-    generalEventKeyToEventSubscribers
-      .computeIfAbsent(createGeneralEventKey(game, platform), key -> new HashSet<>())
-      .add(deferredResult);;
+  public void kickGuestFromRoomOwnerByCurrentUser(String guestUserName) {
+    getRoomOwnedByCurrentUser()
+      .ifPresent(room -> {
+        if (room.removeGuestByUserName(guestUserName))
+          publishRoomEvent(room.getId(), new UserEvent(Type.USER_HAS_LEFT, userService.getByUserName(guestUserName)));
+      });
   }
-  
+
   @Override
-  public List<? extends IdentifiedRoomPojo> getActive(Game game, Platform platform, String hostQuery, String roomQuery, List<RoomType> roomTypes, List<String> locationIds) {
+  public void ping(Long id) {
+    final var currentUser = userService.getCurrentUser();
+    final var room = getById(id);
+
+    final var userNameToPingTimestamp = roomIdToUserNameToPingTimestamp.computeIfAbsent(id, key -> new ConcurrentHashMap<>());
+    userNameToPingTimestamp.put(currentUser.getUserName(), System.currentTimeMillis());
+
+    if (!isCurrentUserIsAMemberOfThisRoom(room, currentUser)) {
+      publishRoomEvent(id, new UserEvent(Type.USER_HAS_JOINED, currentUser));
+      room.addGuest(currentUser);
+    }
+
+    updateIsOnlineFlagOnAllUsers(room, userNameToPingTimestamp);
+  }
+
+  @Override
+  public void leave(Long id) {
+    Optional
+      .ofNullable(getById(id))
+      .ifPresent(room -> {
+        final var currentUser = userService.getCurrentUser();
+        if (room.removeGuestByUserName(currentUser.getUserName()))
+          publishRoomEvent(id, new UserEvent(Type.USER_HAS_LEFT, currentUser));
+      });
+  }
+
+  @Override
+  public void addMessage(Long roomId, String content) {
+    final var chatMessage =
+      new ChatMessage(
+        userService.getCurrentUser(),
+        System.currentTimeMillis(),
+        content
+      );
+
+    getById(roomId).addMessage(chatMessage);
+
+    publishRoomEvent(roomId, new ChatMessageEvent(chatMessage));
+  }
+
+  // all rooms
+
+  @Override
+  public List<IdentifiedRoomPojo> searchRooms(Game game, Platform platform, String hostQuery, String roomQuery, List<RoomType> roomTypes, List<String> locationIds) {
     return rooms.stream()
       .filter(room ->
         room.getGame() == game &&
@@ -104,83 +193,10 @@ public class RoomServiceImpl implements RoomService {
   }
 
   @Override
-  public RoomDetails registerToAndGetDetails(Long id) {
-
-    final var room = getById(id);
-    final var currentUser = userService.getCurrentUser();
-
-    if (room != null) {
-      removeCurrentUserFromOtherRooms(currentUser, room);
-
-      if (!isCurrentUserIsAMemberOfThisRoom(room, currentUser)) {
-        publishRoomEvent(id, new UserEvent(Type.USER_HAS_JOINED, currentUser));
-        room.addGuest(currentUser);
-      }
-
-      ping(room.getId());
-      updateIsOnlineFlagOnAllUsers(room);
-    }
-
-    return room;
-  }
-
-  @Override
-  public Long createRoomReturningId(RoomDraftPojo roomDraft) {
-    final var currentUser = userService.getCurrentUser();
-    closeRoomOwnedByCurrentUser();
-    removeCurrentUserFromOtherRooms(currentUser, null);
-
-    final var room = new RoomDetails(nextId(), currentUser, roomDraft);
-    room.setId(nextId());
-    this.rooms.add(room);
-    publishGeneralEvent(room, new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_CREATED, room));
-    return room.getId();
-  }
-
-  @Override
-  public void closeRoomOwnedByCurrentUser() {
-
-    getRoomOwnedByCurrentUser()
-      .ifPresent(room -> {
-        rooms.remove(room);
-        publishGeneralEvent(room, new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_REMOVED, room));
-      });
-  }
-
-  @Override
-  public void kickGuestFromRoomOwnerByCurrentUser(String guestUserName) {
-    getRoomOwnedByCurrentUser()
-      .ifPresent(room -> {
-        if (room.removeGuestByUserName(guestUserName))
-          publishRoomEvent(room.getId(), new UserEvent(Type.USER_HAS_LEFT, userService.getByUserName(guestUserName)));
-      });
-  }
-
-  @Override
-  public void ping(Long id) {
-    final var currentUser = userService.getCurrentUser();
-    final var room = getById(id);
-    
-    final var userNameToPingTimestamp = roomIdToUserNameToPingTimestamp.computeIfAbsent(id, key -> new ConcurrentHashMap<>());
-    userNameToPingTimestamp.put(currentUser.getUserName(), System.currentTimeMillis());
-
-    if (!isCurrentUserIsAMemberOfThisRoom(room, currentUser)) {
-      publishRoomEvent(id, new UserEvent(Type.USER_HAS_JOINED, currentUser));
-      room.addGuest(currentUser);
-    }
-
-    updateIsOnlineFlagOnAllUsers(room, userNameToPingTimestamp);
-  }
-
-  @Override
-  public void leaveRoom(Long roomId) {
-    Optional
-      .ofNullable(getById(roomId))
-      .ifPresent(room -> {
-        final var currentUser = userService.getCurrentUser();
-        if (room.removeGuestByUserName(currentUser.getUserName()))
-          publishRoomEvent(roomId, new UserEvent(Type.USER_HAS_LEFT, currentUser));
-      });
+  public void subscribeToGeneralEvent(Game game, Platform platform, DeferredResult<List<AbstractEvent>> deferredResult) {
+    generalEventKeyToEventSubscribers
+      .computeIfAbsent(createGeneralEventKey(game, platform), key -> new HashSet<>())
+      .add(deferredResult);;
   }
 
   private Optional<RoomDetails> getRoomOwnedByCurrentUser() {

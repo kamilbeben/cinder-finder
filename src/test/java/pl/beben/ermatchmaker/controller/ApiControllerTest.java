@@ -21,6 +21,7 @@ import pl.beben.ermatchmaker.domain.Platform;
 import pl.beben.ermatchmaker.domain.RoomType;
 import pl.beben.ermatchmaker.pojo.*;
 import pl.beben.ermatchmaker.pojo.event.AbstractEvent;
+import pl.beben.ermatchmaker.pojo.event.ChatMessageEvent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,13 +80,49 @@ class ApiControllerTest {
   }
 
   @Test
-  public void userJoinedThenLeftTestUsingLongPolling() throws Exception {
-    
-  }
-
-  @Test
   public void chatMessagesEventsTestUsingLongPolling() throws Exception {
-    
+
+    // given
+    final var roomId = httpCreateRoomReturningId(createAuthentication());
+    final var roomEventSubscriber =
+      mvc
+        .perform(
+          get("/api/room/subscribe_to_event?id=" + roomId)
+            .with(authentication(createAuthentication()))
+        );
+
+    final var chattyAuthentication = createAuthentication();
+    final var chattyUserInGameName = "kek";
+    httpUserSetInGameName(chattyAuthentication, chattyUserInGameName);
+
+    final var chatMessageContent = UUID.randomUUID() + "; " + "xxxx_ 32321321312 aąeęóćżźł";
+
+    // when
+    httpAddMessage(chattyAuthentication, roomId, chatMessageContent);
+
+    // then
+    roomEventSubscriber.andExpect(status().isOk());
+
+    // given
+    final var chatMessageEvents =
+      (List<ChatMessageEvent>) roomEventSubscriber
+        .andReturn()
+          .getAsyncResult();
+
+    // then
+    Assert.assertNotNull(chatMessageEvents);
+    Assert.assertEquals(1, chatMessageEvents.size());
+
+    // given
+    final var chatMessageEvent = chatMessageEvents.get(0);
+
+    // then
+    Assert.assertNotNull(chatMessageEvent);
+    Assert.assertNotNull(chatMessageEvent.getPayload());
+    Assert.assertEquals(AbstractEvent.Type.CHAT_MESSAGE, chatMessageEvent.getType());
+    Assert.assertEquals(chattyUserInGameName, chatMessageEvent.getPayload().getUserPojo().getInGameName());
+    Assert.assertEquals(chatMessageContent, chatMessageEvent.getPayload().getContent());
+    Assert.assertNotNull(chatMessageEvent.getPayload().getTimestamp());
   }
 
   @Test
@@ -341,8 +378,21 @@ class ApiControllerTest {
       .andExpect(
         status().isOk()
       )
-      .andReturn()
-      .getResponse();
+      .andReturn();
+  }
+
+  private void httpAddMessage(Authentication authentication, Long roomId, String content) throws Exception {
+    mvc
+      .perform(
+        post("/api/room/message?id=" + roomId)
+          .with(authentication(authentication))
+          .contentType(MediaType.TEXT_PLAIN)
+          .content(content)
+      )
+      .andExpect(
+        status().isOk()
+      )
+      .andReturn();
   }
 
   private Authentication createAuthentication () {

@@ -56,7 +56,7 @@ public class ApiController {
 
   @DeleteMapping("/room/leave")
   public void leaveRoom(@RequestParam("id") Long id) {
-    roomService.leaveRoom(id);
+    roomService.leave(id);
   }
 
   @DeleteMapping("/room/owned_by_current_user/close")
@@ -69,15 +69,21 @@ public class ApiController {
     roomService.kickGuestFromRoomOwnerByCurrentUser(guestUserName);
   }
 
+  @PostMapping("/room/message")
+  public void addMessage(@RequestParam("id") Long roomId, @RequestBody String content) {
+    roomService.addMessage(roomId, content);
+  }
+
+  // TODO restrict serialized properties to IdentifiedRoomPojo (ignore "guests", "chatMessages", etc)
   @GetMapping("/room/all")
-  public List<? extends IdentifiedRoomPojo> getActiveRooms(@RequestParam(name = "game") Game game,
-                                                           @RequestParam(name = "platform") Platform platform,
-                                                           @RequestParam(name = "host_query", required = false) String hostQuery,
-                                                           @RequestParam(name = "room_query", required = false) String roomQuery,
-                                                           @RequestParam(name = "room_type", required = false) List<RoomType> roomTypes,
-                                                           @RequestParam(name = "location_ids", required = false) List<String> locationIds) {
+  public List<IdentifiedRoomPojo> searchRooms(@RequestParam(name = "game") Game game,
+                                              @RequestParam(name = "platform") Platform platform,
+                                              @RequestParam(name = "host_query", required = false) String hostQuery,
+                                              @RequestParam(name = "room_query", required = false) String roomQuery,
+                                              @RequestParam(name = "room_type", required = false) List<RoomType> roomTypes,
+                                              @RequestParam(name = "location_ids", required = false) List<String> locationIds) {
     
-    return roomService.getActive(game, platform, hostQuery, roomQuery, roomTypes, locationIds);
+    return roomService.searchRooms(game, platform, hostQuery, roomQuery, roomTypes, locationIds);
   }
   
   @GetMapping("/room/all/subscribe_to_event")
