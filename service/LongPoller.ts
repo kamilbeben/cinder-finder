@@ -32,10 +32,18 @@ export default class LongPoller<RESPONSE> {
     }
   }
 
+  public setEndpoint (endpoint : string) : void {
+    this.endpoint = endpoint
+
+    if (this.isRunning)
+      this.requestCancelTokenSource!.cancel('Changed endpoint to "' + this.endpoint + '"')
+    else
+      this.subscribe()
+  }
+
   private async subscribe () : Promise<void> {
     if (!this.isRunning)
       return
-
       
     try {
       this.requestCancelTokenSource = this.$axios.CancelToken.source()

@@ -313,17 +313,43 @@ export default class RoomsPage extends mixins(GameAwarePageMixin, LoggedUserAwar
     })
   }
 
+  private get longPollerEndpoint () : string | null {
+    return this.game && this.user?.lastSelectedPlatform
+      ? `/api/room/all/subscribe_to_event?game=${this.game}&platform=${this.user!.lastSelectedPlatform}`
+      : null
+  }
+
+  @Watch('longPollerEndpoint')
+  private subscribeToLongPollingEvents () : void {
+    const endpoint = this.longPollerEndpoint
+    if (!endpoint) {
+      if (this.longPoller)
+        this.longPoller.unsubscribe()
+
+      return
+    }
+
+    if (this.longPoller) {
+      this.longPoller!.setEndpoint(endpoint)
+    } else {
+      this.longPoller = new LongPoller<LongPollingEvent<IdentifiedRoom>[]>(
+        this.$axios,
+        endpoint,
+        events => this.consumeLongPollingEvents(events)
+      )
+    }
+  }
+
+  private unsubscribeFromLongPollingEvents () : void {
+    this.longPoller?.unsubscribe()
+  }
+
   protected beforeDestroy () : void {
-    this.longPoller?.unsubscribe()    
+    this.unsubscribeFromLongPollingEvents()
   }
 
   protected mounted () {
-    this.longPoller = new LongPoller<LongPollingEvent<IdentifiedRoom>[]>(
-      this.$axios,
-      `/api/room/all/subscribe_to_event`,
-      events => this.consumeLongPollingEvents(events)
-    )
-
+    this.subscribeToLongPollingEvents()
   }
 
 }

@@ -68,10 +68,10 @@ export default class LoggedUserAwarePageMixin extends Vue {
     const localStoragePlatform = localStorage[PLATFORM_LOCAL_STORAGE_KEY]
 
     if (localStorageUserInGameName)
-      this.user!.inGameName = localStorageUserInGameName
+      this.$set(this.user!, 'inGameName', localStorageUserInGameName)
 
     if (localStoragePlatform)
-      this.user!.lastSelectedPlatform = localStoragePlatform
+      this.$set(this.user!, 'lastSelectedPlatform', localStoragePlatform)
   }
 
 }

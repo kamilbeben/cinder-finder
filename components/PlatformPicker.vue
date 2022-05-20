@@ -8,7 +8,7 @@
       :value="value"
       @change="val => $emit('input', val)"
       class="button-group"
-      mandatory
+      :mandatory="!!value"
     >
         <v-btn value="PSX">
           <v-icon v-text="'mdi-sony-playstation'"/>
