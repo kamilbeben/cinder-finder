@@ -89,16 +89,16 @@ class ApiControllerTest {
   }
 
   @Test
-  public void generalLongPollingPerformanceTest() throws Exception {
+  public void generalLongPollingTest() throws Exception {
     // given
     final var subscribers = new ArrayList<ResultActions>();
 
     // let's hope that server can handle that many subscribers
-    for (var i = 0; i < 1e4; i++)
+    for (var i = 0; i < 1e3; i++)
       subscribers.add(
         mvc
           .perform(
-            get("/api/room/all/subscribe_to_event")
+            get("/api/room/all/subscribe_to_event?game=" + GAME + "&platform=" + PLATFORM)
               .with(authentication(createAuthentication()))
           ));
     
@@ -150,9 +150,6 @@ class ApiControllerTest {
     Assert.assertEquals(roomId, roomDetails.getId());
     Assert.assertEquals(1, roomDetails.getGuests().size());
 
-    // given
-    final var roomUpdateTimestampBeforeSecondUserHasBeenRegistered = roomDetails.getUpdateTimestamp();
-    
     // when
     roomDetails = httpRoomRegisterToAndGetRoomDetails(secondGuestUserAuthentication, roomId);
 
@@ -161,12 +158,6 @@ class ApiControllerTest {
     Assert.assertEquals(roomId, roomDetails.getId());
     Assert.assertEquals(2, roomDetails.getGuests().size());
     Assert.assertEquals(2, roomDetails.getGuests().stream().filter(RoomMemberPojo::isOnline).count());
-
-    // given
-    final var roomUpdateTimestampAfterSecondUserHasBeenRegistered = roomDetails.getUpdateTimestamp();
-    
-    // then
-    Assert.assertTrue(roomUpdateTimestampAfterSecondUserHasBeenRegistered > roomUpdateTimestampBeforeSecondUserHasBeenRegistered);
 
     // when
     // 2 missed pings should mark guest as offline
@@ -184,7 +175,6 @@ class ApiControllerTest {
     Assert.assertEquals(roomId, roomDetails.getId());
     Assert.assertEquals(2, roomDetails.getGuests().size());
     Assert.assertEquals(1, roomDetails.getGuests().stream().filter(RoomMemberPojo::isOnline).count());
-    Assert.assertTrue(roomDetails.getUpdateTimestamp() > roomUpdateTimestampAfterSecondUserHasBeenRegistered);
 
     // when
     // another 3 missed pings should kick that guest

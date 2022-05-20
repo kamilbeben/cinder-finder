@@ -81,9 +81,11 @@ public class ApiController {
   }
   
   @GetMapping("/room/all/subscribe_to_event")
-  public DeferredResult<List<AbstractEvent>> subscribeToGeneralEvent() {
+  public DeferredResult<List<AbstractEvent>> subscribeToGeneralEvent(@RequestParam(name = "game") Game game,
+                                                                     @RequestParam(name = "platform") Platform platform) {
+
     final var result = new DeferredResult<List<AbstractEvent>>();
-    roomService.subscribeToGeneralEvent(result);
+    roomService.subscribeToGeneralEvent(game, platform, result);
     return result;
   }
 

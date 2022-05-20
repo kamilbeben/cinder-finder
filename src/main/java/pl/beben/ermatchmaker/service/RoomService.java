@@ -12,11 +12,13 @@ import pl.beben.ermatchmaker.pojo.event.AbstractEvent;
 import java.util.List;
 
 public interface RoomService {
+
   void subscribeToRoomEvent(Long roomId, DeferredResult<List<AbstractEvent>> deferredResult);
 
-  void subscribeToGeneralEvent(DeferredResult<List<AbstractEvent>> deferredResult);
+  void subscribeToGeneralEvent(Game game, Platform platform, DeferredResult<List<AbstractEvent>> deferredResult);
 
   List<? extends IdentifiedRoomPojo> getActive(Game game, Platform platform, String hostQuery, String roomQuery, List<RoomType> roomTypes, List<String> locationIds);
+
   RoomDetails registerToAndGetDetails(Long id);
 
   Long createRoomReturningId(RoomDraftPojo room);

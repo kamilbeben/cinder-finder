@@ -42,7 +42,7 @@ public class RoomServiceImpl implements RoomService {
   
   private final Map<Long, Map<String, Long>> roomIdToUserNameToPingTimestamp = new ConcurrentHashMap<>();
   private final Map<Long, Set<DeferredResult<List<AbstractEvent>>>> roomIdToEventSubscribers = new ConcurrentHashMap<>();
-  private final Set<DeferredResult<List<AbstractEvent>>> generalEventSubscribers = new HashSet<>();
+  private final Map<String, Set<DeferredResult<List<AbstractEvent>>>> generalEventKeyToEventSubscribers = new ConcurrentHashMap<>();
 
   private final List<RoomDetails> rooms = Collections.synchronizedList(new ArrayList<>(
     Arrays.asList(
@@ -67,8 +67,10 @@ public class RoomServiceImpl implements RoomService {
   }
   
   @Override
-  public void subscribeToGeneralEvent(DeferredResult<List<AbstractEvent>> deferredResult) {
-    generalEventSubscribers.add(deferredResult);
+  public void subscribeToGeneralEvent(Game game, Platform platform, DeferredResult<List<AbstractEvent>> deferredResult) {
+    generalEventKeyToEventSubscribers
+      .computeIfAbsent(createGeneralEventKey(game, platform), key -> new HashSet<>())
+      .add(deferredResult);;
   }
   
   @Override
@@ -131,7 +133,7 @@ public class RoomServiceImpl implements RoomService {
     final var room = new RoomDetails(nextId(), currentUser, roomDraft);
     room.setId(nextId());
     this.rooms.add(room);
-    publishGeneralEvent(new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_CREATED, room));
+    publishGeneralEvent(room, new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_CREATED, room));
     return room.getId();
   }
 
@@ -141,7 +143,7 @@ public class RoomServiceImpl implements RoomService {
     getRoomOwnedByCurrentUser()
       .ifPresent(room -> {
         rooms.remove(room);
-        publishGeneralEvent(new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_REMOVED, room));
+        publishGeneralEvent(room, new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_REMOVED, room));
       });
   }
 
@@ -248,14 +250,18 @@ public class RoomServiceImpl implements RoomService {
       });
   }
   
-  private void publishGeneralEvent(AbstractEvent event) {
-    publishGeneralEvent(Arrays.asList(event));
+  private void publishGeneralEvent(RoomDraftPojo room, AbstractEvent event) {
+    publishGeneralEvent(room.getGame(), room.getPlatform(), Arrays.asList(event));
   }
 
-  private void publishGeneralEvent(List<AbstractEvent> events) {
-    final var eventSubscribers = new HashSet<>(generalEventSubscribers);
-    
-    generalEventSubscribers.clear();
+  private void publishGeneralEvent(Game game, Platform platform, List<AbstractEvent> events) {
+    if (events == null || events.isEmpty())
+      return;
+
+    final var originalEventSubscribers = generalEventKeyToEventSubscribers.computeIfAbsent(createGeneralEventKey(game, platform), key -> new HashSet<>());
+    final var eventSubscribers = new HashSet<>(originalEventSubscribers);
+
+    originalEventSubscribers.clear();
     eventSubscribers.forEach(deferredResult -> deferredResult.setResult(events));
   }
   
@@ -272,6 +278,10 @@ public class RoomServiceImpl implements RoomService {
 
     originalEventSubscribers.clear();
     eventSubscribers.forEach(deferredResult -> deferredResult.setResult(events));
+  }
+
+  private String createGeneralEventKey(Game game, Platform platform) {
+    return game + ";" + platform;
   }
 
   private static long idSequence = (long) 1e4;
