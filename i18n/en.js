@@ -21,6 +21,8 @@ export default {
   'room': {
     'members': 'Members',
     'members-placeholder': 'Noone is here yet',
+    'messages': 'Chat',
+    'messages-placeholder': 'No messages has been sent in this room',
     'host': 'Host',
     'guest': 'Guest',
     'kick': 'Kick',

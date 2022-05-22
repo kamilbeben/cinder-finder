@@ -13,6 +13,11 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
   height: 100%;
 }
 
+.v-application--wrap > .v-main {
+  overflow: hidden;
+  flex: 1 1 auto;
+}
+
 .flex.equal-width {
   display: flex;
   flex-wrap: nowrap;
@@ -61,13 +66,7 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
   opacity: .8;
 }
 
-.list {
-  height: 0;
-  flex: 1 1 auto;
-  overflow: auto;
-}
-
-.list > div, .list > a {
+.list > div:not(.reset-css), .list > a {
   background: #21252964;
   padding: .25em .5em;
   margin-top: .5em;

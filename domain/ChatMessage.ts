@@ -1,7 +1,8 @@
 
+import User from './User'
+
 type ChatMessage = {
-  userName : string
-  inGameName : string
+  user : User
   timestamp : number
   content : string
 }

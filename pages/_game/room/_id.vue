@@ -65,83 +65,87 @@
       v-text="room.password"
     />
 
-    <div
-      class="muted mt-4"
-      v-text="$t('room.members')"
-    />
-
-    <div class="list">
+    <div class="lists-wrapper">
       <div
-        v-if="members.length === 0"
-        class="muted px-4 py-2"
-        v-text="$t('room.members-placeholder')"
+        class="muted mt-4"
+        v-text="$t('room.members')"
       />
-      <div
-        v-for="member in members"
-        :key="member.userName"
-        class="member d-flex"
-      >
-        <v-icon
-          :color="
-            member.isOnline
-              ? 'green'
-              : 'red'
-          "
-          :title="$t(
-            room.host.userName === member.userName
-              ? 'room.host'
-              : 'room.guest'
-          )"
-          v-text="
-            room.host.userName === member.userName
-              ? 'mdi-crown'
-              : 'mdi-web'
-          "
+
+      <div class="list">
+        <div
+          v-if="members.length === 0"
+          class="muted px-4 py-2"
+          v-text="$t('room.members-placeholder')"
         />
-        <div class="d-flex ml-2 flex-column py-1">
-          <div
-            class="in-game-name mt-auto"
-            :class="{
-              'unset': !member.inGameName
-            }"
-            v-text="member.inGameName || $t('room.in-game-name-placeholder')"
-          />
-          <div
-            class="muted"
-            v-text="member.userName"
-          />
-        </div>
-        <v-btn
-          v-if="false && roomIsOwnedByLoggedUser && room.host.userName !== member.userName"
-          color="error"
-          class="ml-auto"
-          :title="$t('room.kick')"
-          @click="() => kickUser(member)"
+        <div
+          v-for="member in members"
+          :key="member.userName"
+          class="member d-flex"
         >
-          <v-icon v-text="'mdi-karate'"/>
-        </v-btn>
+          <v-icon
+            :color="
+              member.isOnline
+                ? 'green'
+                : 'red'
+            "
+            :title="$t(
+              room.host.userName === member.userName
+                ? 'room.host'
+                : 'room.guest'
+            )"
+            v-text="
+              room.host.userName === member.userName
+                ? 'mdi-crown'
+                : 'mdi-web'
+            "
+          />
+          <div class="d-flex ml-2 flex-column py-1">
+            <div
+              class="in-game-name mt-auto"
+              :class="{
+                'unset': !member.inGameName
+              }"
+              v-text="member.inGameName || $t('room.in-game-name-placeholder')"
+            />
+            <div
+              class="muted"
+              v-text="'@' + member.userName"
+            />
+          </div>
+          <v-btn
+            v-if="false && roomIsOwnedByLoggedUser && room.host.userName !== member.userName"
+            color="error"
+            class="ml-auto"
+            :title="$t('room.kick')"
+            @click="() => kickUser(member)"
+          >
+            <v-icon v-text="'mdi-karate'"/>
+          </v-btn>
+        </div>
       </div>
+
+      <div
+        class="muted mt-4"
+        v-text="$t('room.messages')"
+      />
+      <chat
+        :messages="room.messages"
+        :room-id="room.id"
+      />
     </div>
 
-    <!-- 
-    ## Chat
-      - [ timestamp ] Author
-                      Message
-    -->
-
-      <div class="mt-4 d-flex">
-        <v-btn
-          class="ml-auto"
-          color="error"
-          @click="leave"
-        >
-          {{ $t(roomIsOwnedByLoggedUser ? 'room.close' : 'room.leave') }}
-        </v-btn>
-      </div>
+    <div class="mt-4 d-flex">
+      <v-btn
+        class="ml-auto"
+        color="error"
+        @click="leave"
+      >
+        {{ $t(roomIsOwnedByLoggedUser ? 'room.close' : 'room.leave') }}
+      </v-btn>
+    </div>
 
   </div>
 </template>
-
 
 <script lang="ts">
 
@@ -155,6 +159,7 @@ import { Context } from '@nuxt/types'
 import Location from '~/domain/Location'
 import GameToLocations from '~/static/GameToLocations'
 
+import Chat from '~/components/Chat.vue'
 import LongPoller from '~/service/LongPoller'
 import LongPollingEvent, { Type as LongPollingEventType } from '~/domain/LongPollingEvent'
 
@@ -165,7 +170,7 @@ import RoomMember from '~/domain/RoomMember'
 @Component({
   name: 'RoomDetailsPage',
   components: {
-    
+    Chat
   }
 })
 export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUserAwarePageMixin, WindowFocusAwareMixin) {
@@ -242,7 +247,7 @@ export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUs
       switch (event.type) {
         case LongPollingEventType.CHAT_MESSAGE:
           message = event.payload
-          console.log('chat message', message)
+          this.room!.messages.push(message)
           return
         case LongPollingEventType.USER_HAS_JOINED:
           user = event.payload
@@ -345,6 +350,18 @@ export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUs
 
   .member {
     line-height: .9em;
+    overflow: hidden;
+  }
+
+  .lists-wrapper {
+    flex: auto;
+    overflow: hidden;
+  }
+
+  .lists-wrapper > .list {
+    max-height: 40%;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
 </style>
