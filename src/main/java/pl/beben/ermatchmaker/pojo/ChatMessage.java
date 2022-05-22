@@ -18,7 +18,7 @@ import static lombok.AccessLevel.PRIVATE;
 public class ChatMessage implements Serializable {
   private static final long serialVersionUID = 9031001801992200143L;
 
-  UserPojo userPojo;
+  UserPojo user;
   Long timestamp;
   String content;
 

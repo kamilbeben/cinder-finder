@@ -120,7 +120,7 @@ class ApiControllerTest {
     Assert.assertNotNull(chatMessageEvent);
     Assert.assertNotNull(chatMessageEvent.getPayload());
     Assert.assertEquals(AbstractEvent.Type.CHAT_MESSAGE, chatMessageEvent.getType());
-    Assert.assertEquals(chattyUserInGameName, chatMessageEvent.getPayload().getUserPojo().getInGameName());
+    Assert.assertEquals(chattyUserInGameName, chatMessageEvent.getPayload().getUser().getInGameName());
     Assert.assertEquals(chatMessageContent, chatMessageEvent.getPayload().getContent());
     Assert.assertNotNull(chatMessageEvent.getPayload().getTimestamp());
   }
