@@ -17,6 +17,7 @@ import pl.beben.ermatchmaker.service.utils.QueryUtils;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static pl.beben.ermatchmaker.pojo.event.AbstractEvent.Type;
@@ -46,7 +47,10 @@ public class RoomServiceImpl implements RoomService {
     Arrays.asList(
       new RoomDetails(nextId(), testUser1, new RoomDraftPojo(Game.ELDEN_RING, Platform.PSX, RoomType.COOP, "First room", "Help plz", "ghzx", "Beastman of Farum Azula (Limgrave)"))
         .addGuest(testUser2)
-        .addGuest(testUser3),
+        .addGuest(testUser3)
+        .addMessage(new ChatMessage(testUser1, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5l), "There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration"))
+        .addMessage(new ChatMessage(testUser2, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(2l), "All the Lorem Ipsum generators on the Internet tend to repeat predefined chunks as necessary, making this the first true generator on the Internet."))
+        .addMessage(new ChatMessage(testUser4, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(1l), "no xD")),
       new RoomDetails(nextId(), testUser2, new RoomDraftPojo(Game.ELDEN_RING, Platform.PSX, RoomType.COOP, "Second room", "Help plz", "ghzx", "Beastman of Farum Azula (Limgrave)"))
         .addGuest(testUser4)
         .addGuest(testUser3)

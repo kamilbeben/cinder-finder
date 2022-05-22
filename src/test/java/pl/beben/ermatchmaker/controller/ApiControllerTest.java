@@ -382,12 +382,14 @@ class ApiControllerTest {
   }
 
   private void httpAddMessage(Authentication authentication, Long roomId, String content) throws Exception {
+    final var payload = new ChatMessageRequest();
+    payload.setContent(content);
     mvc
       .perform(
         post("/api/room/message?id=" + roomId)
           .with(authentication(authentication))
-          .contentType(MediaType.TEXT_PLAIN)
-          .content(content)
+          .contentType(MediaType.APPLICATION_JSON)
+          .content(objectMapper.writeValueAsString(payload))
       )
       .andExpect(
         status().isOk()

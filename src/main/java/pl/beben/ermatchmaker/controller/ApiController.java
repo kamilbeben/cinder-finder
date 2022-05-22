@@ -6,10 +6,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import pl.beben.ermatchmaker.domain.Game;
 import pl.beben.ermatchmaker.domain.Platform;
 import pl.beben.ermatchmaker.domain.RoomType;
-import pl.beben.ermatchmaker.pojo.IdentifiedRoomPojo;
-import pl.beben.ermatchmaker.pojo.RoomDetails;
-import pl.beben.ermatchmaker.pojo.RoomDraftPojo;
-import pl.beben.ermatchmaker.pojo.UserPojo;
+import pl.beben.ermatchmaker.pojo.*;
 import pl.beben.ermatchmaker.pojo.event.AbstractEvent;
 import pl.beben.ermatchmaker.service.RoomService;
 import pl.beben.ermatchmaker.service.UserService;
@@ -81,8 +78,8 @@ public class ApiController {
   }
 
   @PostMapping("/room/message")
-  public void addMessage(@RequestParam("id") Long roomId, @RequestBody String content) {
-    roomService.addMessage(roomId, content);
+  public void addMessage(@RequestParam("id") Long roomId, @RequestBody ChatMessageRequest chatMessageRequest) {
+    roomService.addMessage(roomId, chatMessageRequest.getContent());
   }
 
   // all rooms

@@ -64,7 +64,8 @@ public class RoomDetails extends IdentifiedRoomPojo {
     return guests.removeIf(user -> Objects.equals(user.getUserName(), userName));
   }
   
-  public void addMessage(ChatMessage message) {
+  public RoomDetails addMessage(ChatMessage message) {
     messages.add(message);
+    return this;
   }
 }
