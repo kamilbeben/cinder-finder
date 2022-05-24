@@ -1,5 +1,18 @@
 <template>
   <div class="page-default">
+
+    <v-text-field
+      v-model="user.inGameName"
+      :label="$t('rooms.in-game-name')"
+      :rules="[
+        RuleFactory.maxLength(50),
+        RuleFactory.minLength(3)
+      ]"
+      counter="50"
+      style="flex: unset;"
+      class="mb-4"
+    />
+    
     <platform-picker
       v-if="!user.lastSelectedPlatform"
       v-model="user.lastSelectedPlatform"
@@ -163,6 +176,7 @@ import Location, { LocationId } from '~/domain/Location'
 import GameToLocations from '~/static/GameToLocations'
 
 import LongPoller from '~/service/LongPoller'
+import RuleFactory from '~/service/RuleFactory'
 import LongPollingEvent, { Type as LongPollingEventType } from '~/domain/LongPollingEvent'
 
 import IdentifiedRoom from '~/domain/IdentifiedRoom'
@@ -237,6 +251,7 @@ async function fetchRooms (
 })
 export default class RoomsPage extends mixins(GameAwarePageMixin, LoggedUserAwarePageMixin, WindowFocusAwareMixin) {
 
+  private readonly RuleFactory = new RuleFactory(this)
 
   private longPoller ?: LongPoller<LongPollingEvent<User | any>[]> = undefined
 

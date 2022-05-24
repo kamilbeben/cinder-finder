@@ -34,6 +34,7 @@ export default {
   },
 
   'rooms': {
+    'in-game-name': 'In-game name',
     'available-rooms': 'Available rooms',
     'available-rooms-placeholder': 'No rooms are matching your search criteria',
     'apply-filter': 'Apply filter',
