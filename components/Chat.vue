@@ -20,7 +20,7 @@
           :class="{
             'unset': !message.user.inGameName
           }"
-          v-text="message.inGameName || $t('room.in-game-name-placeholder')"
+          v-text="message.user.inGameName || $t('room.in-game-name-placeholder')"
         />
         <div
           class="muted ml-2 my-auto"
