@@ -1,5 +1,13 @@
 <template>
-  <v-app dark>
+  <v-app
+    dark
+    class="main-application-container"
+    :class="
+        $device.isDesktop ? 'desktop'
+      : $device.isTablet  ? 'tablet'
+      :                     'mobile'
+    "
+  >
 
     <v-app-bar
       fixed

@@ -1,4 +1,39 @@
 
+/* scrollbar start */
+/* modified semantic ui scrollbar */
+.main-application-container.desktop ::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 0.3rem !important;
+  height: 0.3rem !important;
+  background-color: #F5F5F5 !important;
+}
+
+body .main-application-container.desktop ::-webkit-scrollbar-thumb {
+  cursor: pointer;
+  border-radius: 5px;
+  background: rgba(0,0,0,.25);
+  -webkit-transition: color .2s ease;
+  transition: color .2s ease;
+}
+
+.main-application-container.desktop ::-webkit-scrollbar-thumb {
+  -webkit-appearance: none;
+  background: rgba(0, 0, 0, 0.5) !important;
+  -webkit-transition: color .2s ease !important;
+  transition: color .2s ease !important;
+}
+
+body .main-application-container.desktop ::-webkit-scrollbar-track {
+  background: rgba(0,0,0,.1);
+  border-radius: 0;
+}
+.main-application-container.desktop ::-webkit-scrollbar-track {
+  -webkit-appearance: none;
+  background: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* scrollbar end */
+
 html, body {
   overflow: hidden !important;
 }
@@ -64,6 +99,10 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
 .muted {
   font-size: .8em;
   opacity: .8;
+}
+
+.main-application-container.desktop .list {
+  padding-right: .5rem;
 }
 
 .list > div:not(.reset-css), .list > a {

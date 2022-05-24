@@ -47,7 +47,8 @@ export default {
     '@nuxtjs/pwa',
     '@nuxtjs/i18n',
     '@nuxtjs/toast',
-    'cookie-universal-nuxt'
+    'cookie-universal-nuxt',
+    'nuxt-device-detect'
   ],
 
   i18n: {
