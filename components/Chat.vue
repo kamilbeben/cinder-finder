@@ -49,6 +49,7 @@
       counter="250"
       append-outer-icon="mdi-send"
       @click:append-outer="addMessage"
+      @keydown.enter="addMessage"
     />
   </div>
 </template>
