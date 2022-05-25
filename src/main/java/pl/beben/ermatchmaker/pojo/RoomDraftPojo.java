@@ -28,5 +28,6 @@ public class RoomDraftPojo implements Serializable {
   String password;
 
   String locationId;
+  Integer hostLevel;
 
 }

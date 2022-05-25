@@ -1,5 +1,6 @@
 package pl.beben.ermatchmaker.service;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -45,19 +46,19 @@ public class RoomServiceImpl implements RoomService {
 
   private final List<RoomDetails> rooms = Collections.synchronizedList(new ArrayList<>(
     Arrays.asList(
-      new RoomDetails(nextId(), testUser1, new RoomDraftPojo(Game.ELDEN_RING, Platform.PSX, RoomType.COOP, "First room", "Help plz", "ghzx", "Beastman of Farum Azula (Limgrave)"))
+      new RoomDetails(nextId(), testUser1, new RoomDraftPojo(Game.ELDEN_RING, Platform.PSX, RoomType.COOP, "First room", "Help plz", "ghzx", "Beastman of Farum Azula (Limgrave)", 23))
         .addGuest(testUser2)
         .addGuest(testUser3)
         .addMessage(new ChatMessage(testUser1, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5l), "There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration"))
         .addMessage(new ChatMessage(testUser2, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(2l), "All the Lorem Ipsum generators on the Internet tend to repeat predefined chunks as necessary, making this the first true generator on the Internet."))
         .addMessage(new ChatMessage(testUser4, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(1l), "no xD")),
-      new RoomDetails(nextId(), testUser2, new RoomDraftPojo(Game.ELDEN_RING, Platform.PSX, RoomType.COOP, "Second room", "Help plz", "ghzx", "Beastman of Farum Azula (Limgrave)"))
+      new RoomDetails(nextId(), testUser2, new RoomDraftPojo(Game.ELDEN_RING, Platform.PSX, RoomType.COOP, "Second room", "Help plz", "ghzx", "Beastman of Farum Azula (Limgrave)", null))
         .addGuest(testUser4)
         .addGuest(testUser3)
         .addGuest(testUser1),
-      new RoomDetails(nextId(), testUser3, new RoomDraftPojo(Game.ELDEN_RING, Platform.PSX, RoomType.PVP, "Third room", "Help plz", "ghzx", "Bloodhound Knight Darriwil (Limgrave)")),
-      new RoomDetails(nextId(), testUser4, new RoomDraftPojo(Game.ELDEN_RING, Platform.PSX, RoomType.PVP, "Fourth room", "Help plz", "ghzx", "Deathbird (Limgrave)")),
-      new RoomDetails(nextId(), testUser2, new RoomDraftPojo(Game.ELDEN_RING, Platform.XBOX, RoomType.COOP, "Fifth room", "Help plz", "ghzx", "Demi-Human Chief (Limgrave)"))
+      new RoomDetails(nextId(), testUser3, new RoomDraftPojo(Game.ELDEN_RING, Platform.PSX, RoomType.PVP, "Third room", "Help plz", "ghzx", "Bloodhound Knight Darriwil (Limgrave)", 55)),
+      new RoomDetails(nextId(), testUser4, new RoomDraftPojo(Game.ELDEN_RING, Platform.PSX, RoomType.PVP, "Fourth room", "Help plz", "ghzx", "Deathbird (Limgrave)", 34)),
+      new RoomDetails(nextId(), testUser2, new RoomDraftPojo(Game.ELDEN_RING, Platform.XBOX, RoomType.COOP, "Fifth room", "Help plz", "ghzx", "Demi-Human Chief (Limgrave)", 133))
     )
   ));
 
@@ -167,7 +168,14 @@ public class RoomServiceImpl implements RoomService {
   // all rooms
 
   @Override
-  public List<IdentifiedRoomPojo> searchRooms(Game game, Platform platform, String hostQuery, String roomQuery, List<RoomType> roomTypes, List<String> locationIds) {
+  public List<IdentifiedRoomPojo> searchRooms(@NonNull Game game,
+                                              @NonNull Platform platform,
+                                              String hostQuery,
+                                              String roomQuery,
+                                              List<RoomType> roomTypes,
+                                              List<String> locationIds,
+                                              Integer minHostLevel,
+                                              Integer maxHostLevel) {
     return rooms.stream()
       .filter(room ->
         room.getGame() == game &&
@@ -186,7 +194,21 @@ public class RoomServiceImpl implements RoomService {
           QueryUtils.matches(room.getHost().getUserName(), hostQuery) ||
           QueryUtils.matches(room.getHost().getInGameName(), hostQuery)
         ) &&
-        QueryUtils.matches(room.getName(), roomQuery)
+        QueryUtils.matches(room.getName(), roomQuery) &&
+        (
+          minHostLevel == null ||
+          (
+            room.getHostLevel() != null &&
+            room.getHostLevel() >= minHostLevel
+          )
+        ) &&
+        (
+          maxHostLevel == null ||
+          (
+            room.getHostLevel() != null &&
+            room.getHostLevel() <= maxHostLevel
+          )
+        )
       )
       .sorted(
         ((Comparator<RoomDetails>) (left, right) -> QueryUtils.compareByQuery(left.getHost().getUserName(), right.getHost().getUserName(), hostQuery))

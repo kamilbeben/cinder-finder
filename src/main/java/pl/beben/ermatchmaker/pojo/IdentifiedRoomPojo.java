@@ -20,7 +20,7 @@ public class IdentifiedRoomPojo extends RoomDraftPojo {
   RoomMemberPojo host;
   
   public IdentifiedRoomPojo(Long id, UserPojo host, RoomDraftPojo draft) {
-    super(draft.getGame(), draft.getPlatform(), draft.getType(), draft.getName(), draft.getDescription(), draft.getPassword(), draft.getLocationId());
+    super(draft.getGame(), draft.getPlatform(), draft.getType(), draft.getName(), draft.getDescription(), draft.getPassword(), draft.getLocationId(), draft.getHostLevel());
     this.id = id;
     this.host = new RoomMemberPojo(host);
     this.host.setOnline(true);

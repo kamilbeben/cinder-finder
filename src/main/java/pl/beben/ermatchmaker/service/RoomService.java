@@ -1,5 +1,6 @@
 package pl.beben.ermatchmaker.service;
 
+import lombok.NonNull;
 import org.springframework.web.context.request.async.DeferredResult;
 import pl.beben.ermatchmaker.domain.Game;
 import pl.beben.ermatchmaker.domain.Platform;
@@ -31,7 +32,14 @@ public interface RoomService {
   void addMessage(Long roomId, String content);
 
   // all rooms
-  List<IdentifiedRoomPojo> searchRooms(Game game, Platform platform, String hostQuery, String roomQuery, List<RoomType> roomTypes, List<String> locationIds);
+  List<IdentifiedRoomPojo> searchRooms(@NonNull Game game,
+                                       @NonNull Platform platform,
+                                       String hostQuery,
+                                       String roomQuery,
+                                       List<RoomType> roomTypes,
+                                       List<String> locationIds,
+                                       Integer minHostLevel,
+                                       Integer maxHostLevel);
 
   void subscribeToGeneralEvent(Game game, Platform platform, DeferredResult<List<AbstractEvent>> deferredResult);
 }

@@ -91,9 +91,11 @@ public class ApiController {
                                               @RequestParam(name = "host_query", required = false) String hostQuery,
                                               @RequestParam(name = "room_query", required = false) String roomQuery,
                                               @RequestParam(name = "room_type", required = false) List<RoomType> roomTypes,
-                                              @RequestParam(name = "location_ids", required = false) List<String> locationIds) {
+                                              @RequestParam(name = "location_ids", required = false) List<String> locationIds,
+                                              @RequestParam(name = "min_host_level", required = false) Integer minHostLevel,
+                                              @RequestParam(name = "max_host_level", required = false) Integer maxHostLevel) {
 
-    return roomService.searchRooms(game, platform, hostQuery, roomQuery, roomTypes, locationIds);
+    return roomService.searchRooms(game, platform, hostQuery, roomQuery, roomTypes, locationIds, minHostLevel, maxHostLevel);
   }
 
   @GetMapping("/room/all/subscribe_to_event")
