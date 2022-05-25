@@ -382,6 +382,8 @@ export default class RoomsPage extends mixins(GameAwarePageMixin, LoggedUserAwar
   private clearFilter () : void {
     this.hostQuery = ''
     this.roomQuery = ''
+    this.minHostLevel = null
+    this.maxHostLevel = null
     this.closeFilterMenu()
   }
 
