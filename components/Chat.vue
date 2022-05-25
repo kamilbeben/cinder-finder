@@ -48,8 +48,8 @@
       ]"
       counter="250"
       append-outer-icon="mdi-send"
-      @click:append-outer="addMessage"
-      @keydown.enter="addMessage"
+      @click:append-outer="sendMessage"
+      @keydown.enter="sendMessage"
     />
   </div>
 </template>
@@ -81,19 +81,22 @@ export default class Chat extends Vue {
   private scrollContainer !: HTMLElement
 
   private messageContent : string = ''
-  private addMessageActionIsLoading : boolean = false
+  private sendMessageActionIsLoading : boolean = false
   
-  public async addMessage () : Promise<void> {
-    this.addMessageActionIsLoading = true
+  public async sendMessage () : Promise<void> {
+    if (!this.messageContent || !this.messageContent.trim())
+      return
+
+    this.sendMessageActionIsLoading = true
     try {
       await this.$axios.post(
         `/api/room/message?id=${this.roomId}`,
         {
-          content: this.messageContent
+          content: this.messageContent.trim()
         })
       this.messageContent = ''
     } finally {
-      this.addMessageActionIsLoading = false
+      this.sendMessageActionIsLoading = false
     }
   }
 
