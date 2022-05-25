@@ -342,7 +342,17 @@ export default class RoomsPage extends mixins(GameAwarePageMixin, LoggedUserAwar
     return [ this.game, this.user?.lastSelectedPlatform, this.hostQuery, this.roomQuery, this.selectedRoomTypes.join(','), this.selectedLocationIds.join(','), this.minHostLevel, this.maxHostLevel ].join(';')
   }
 
+  private doFilterDebounceTimeoutId : number = 0
+
   @Watch('filterKey')
+  private onFilterKeyChanged () : void {
+    clearTimeout(this.doFilterDebounceTimeoutId)
+    this.doFilterDebounceTimeoutId = <number> <any> setTimeout(
+      () => this.doFilter(),
+      250
+    )
+  }
+
   private async doFilter () : Promise<void> {
     this.$set(
       this,
