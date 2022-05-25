@@ -23,6 +23,14 @@ export default class RuleFactory {
     return value => (!value || (<string> value).length >= minLength ) || this.i18n('validation-rule.min-length', { min: minLength }) 
   }
 
+  public max (max : number) : Rule {
+    return value => (!value || <number> value <= max ) || this.i18n('validation-rule.max', { max }) 
+  }
+
+  public min (min : number) : Rule {
+    return value => (!value || <number> value >= min ) || this.i18n('validation-rule.min', { min }) 
+  }
+
   private i18n (i18nCode : string, params ?: any) : string {
     return <string> this.vueContext.$t(i18nCode, params)
   }

@@ -73,6 +73,16 @@
         counter="50"
       />
 
+      <v-text-field
+        v-model="roomDraft.hostLevel"
+        :label="$t('common.host-level-field')"
+        type="number"
+        :rules="[
+          RuleFactory.max(9999),
+          RuleFactory.min(1)
+        ]"
+      />
+
       <div class="mt-4 flex equal-width margin-between-sm">
         <v-btn
           color="success"

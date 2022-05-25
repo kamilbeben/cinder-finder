@@ -71,7 +71,16 @@
               <!-- host name -->
               <div
                 class="my-auto ml-auto"
-                v-text="room.host.inGameName || room.host.userName"
+                v-text="
+                  (
+                    room.host.inGameName ||
+                    room.host.userName
+                  ) + (
+                    room.hostLevel
+                      ? ` (${$t('common.host-level-value', { value: room.hostLevel })})`
+                      : ''
+                  )
+                "
               />
             </div>
 
@@ -146,6 +155,36 @@
             counter="50"
           />
 
+          <label
+            class="mt-2 button-group-label"
+            v-text="$t('common.host-level-field')"
+          />
+
+          <div class="d-flex">
+            <v-text-field
+              v-model="minHostLevel"
+              :label="$t('rooms.min-host-level')"
+              type="number"
+              class="pt-2 mt-0"
+              :rules="[
+                value => isNaN(parseInt(value)) || isNaN(parseInt(maxHostLevel)) || parseInt(value) <= parseInt(maxHostLevel) || $t('rooms.validation.min-is-greater-than-max'),
+                RuleFactory.max(9999),
+                RuleFactory.min(1)
+              ]"
+            />
+            <v-text-field
+              v-model="maxHostLevel"
+              :label="$t('rooms.max-host-level')"
+              type="number"
+              class="pt-2 mt-0 ml-1"
+              :rules="[
+                value => isNaN(parseInt(value)) || isNaN(parseInt(minHostLevel)) || parseInt(value) >= parseInt(minHostLevel) || $t('rooms.validation.max-is-smaller-than-min'),
+                RuleFactory.max(9999),
+                RuleFactory.min(1)
+              ]"
+            />
+          </div>
+
           <v-btn
             class="mt-4"
             color="error"
@@ -212,8 +251,10 @@ async function fetchRooms (
   platform : Platform,
   selectedRoomTypes : RoomType[],
   selectedLocationIds : LocationId[],
-  hostQuery ?: string,
-  roomQuery ?: string
+  hostQuery : string | null,
+  roomQuery : string | null,
+  minHostLevel : number | null,
+  maxHostLevel : number | null
 ) : Promise<IdentifiedRoomWithLocation[]> {
   return enrichRoomsWithLocation(
     await $axios.$get<IdentifiedRoom[]>(
@@ -234,6 +275,16 @@ async function fetchRooms (
         (
           selectedLocationIds && selectedLocationIds.length
             ? `&location_ids=${encodeURIComponent(selectedLocationIds.join(','))}`
+            : ''
+        ) +
+        (
+          minHostLevel
+            ? `&min_host_level=${minHostLevel}`
+            : ''
+        ) +
+        (
+          maxHostLevel
+            ? `&max_host_level=${maxHostLevel}`
             : ''
         )
     ),
@@ -260,6 +311,8 @@ export default class RoomsPage extends mixins(GameAwarePageMixin, LoggedUserAwar
   private selectedLocationIds : string[]  = []
   private hostQuery : string = ''
   private roomQuery : string = ''
+  private minHostLevel : number | null = null
+  private maxHostLevel : number | null = null
   private updateTimestamp : number | null = null
   private rooms : IdentifiedRoomWithLocation[] = []
 
@@ -275,14 +328,18 @@ export default class RoomsPage extends mixins(GameAwarePageMixin, LoggedUserAwar
               game,
               user.lastSelectedPlatform,
               [],
-              []
+              [],
+              null,
+              null,
+              null,
+              null
             )
           : []
     }
   }
 
   private get filterKey () : string {
-    return [ this.game, this.user?.lastSelectedPlatform, this.hostQuery, this.roomQuery, this.selectedRoomTypes.join(','), this.selectedLocationIds.join(',') ].join(';')
+    return [ this.game, this.user?.lastSelectedPlatform, this.hostQuery, this.roomQuery, this.selectedRoomTypes.join(','), this.selectedLocationIds.join(','), this.minHostLevel, this.maxHostLevel ].join(';')
   }
 
   @Watch('filterKey')
@@ -290,7 +347,17 @@ export default class RoomsPage extends mixins(GameAwarePageMixin, LoggedUserAwar
     this.$set(
       this,
       'rooms',
-      await fetchRooms(this.$axios, this.game!, this.user!.lastSelectedPlatform, this.selectedRoomTypes, this.selectedLocationIds, this.hostQuery, this.roomQuery)
+      await fetchRooms(
+        this.$axios,
+        this.game!,
+        this.user!.lastSelectedPlatform,
+        this.selectedRoomTypes,
+        this.selectedLocationIds,
+        this.hostQuery,
+        this.roomQuery,
+        this.minHostLevel,
+        this.maxHostLevel
+      )
     )
   }
 

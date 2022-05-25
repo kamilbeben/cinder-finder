@@ -7,7 +7,8 @@ export default {
     'password': 'Password',
     'location': 'Location',
     'user-name': 'User name',
-
+    'host-level-field': 'Host level',
+    'host-level-value': '{value} level'
   },
 
   'create-room': {
@@ -37,8 +38,14 @@ export default {
     'in-game-name': 'In-game name',
     'available-rooms': 'Available rooms',
     'available-rooms-placeholder': 'No rooms are matching your search criteria',
+    'min-host-level': 'Min',
+    'max-host-level': 'Max',
     'apply-filter': 'Apply filter',
-    'clear-filter': 'Clear filter'
+    'clear-filter': 'Clear filter',
+    'validation': {
+      'max-is-smaller-than-min': 'Max cannot be smaller than min',
+      'min-is-greater-than-max': 'Min cannot be greater than max'
+    }
   },
 
   'game': {
@@ -70,7 +77,9 @@ export default {
   'validation-rule': {
     'field-is-required': 'Field value is required',
     'max-length': 'Field value must be greater than {max} characters',
-    'min-length': 'Field value cannot be shorter than {min} characters'
+    'min-length': 'Field value cannot be shorter than {min} characters',
+    'min': 'Field value must be greater than or equal to {min}',
+    'max': 'Field value must be lesser than or equal to {max}'
   },
 
   'error': {

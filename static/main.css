@@ -127,3 +127,14 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
 .checkbox-group .v-input__slot {
   margin-bottom: 0;
 }
+
+.v-input input[type="number"]::-webkit-outer-spin-button
+.v-input input[type="number"]::-webkit-inner-spin-button {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
+.v-input input[type="number"],
+.v-input input[type="number"]:hover {
+  -moz-appearance: textfield !important;
+}

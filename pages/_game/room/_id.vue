@@ -105,7 +105,17 @@
               :class="{
                 'unset': !member.inGameName
               }"
-              v-text="member.inGameName || $t('room.in-game-name-placeholder')"
+              v-text="
+                (
+                  member.inGameName ||
+                  $t('room.in-game-name-placeholder')
+                ) +
+                (
+                  room.host.userName === member.userName && room.hostLevel
+                    ? ` (${$t('common.host-level-value', { value: room.hostLevel })})`
+                    : ''
+                )
+              "
             />
             <div
               class="muted"

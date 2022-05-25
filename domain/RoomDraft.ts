@@ -16,6 +16,7 @@ type RoomDraft = {
   password ?: string
 
   locationId ?: LocationId
+  hostLevel ?: number
 
 }
 
