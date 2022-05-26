@@ -42,6 +42,7 @@ export default {
     'max-host-level': 'Max',
     'apply-filter': 'Apply filter',
     'clear-filter': 'Clear filter',
+    'room-has-been-closed': 'Room has been closed',
     'validation': {
       'max-is-smaller-than-min': 'Max cannot be smaller than min',
       'min-is-greater-than-max': 'Min cannot be greater than max'

@@ -232,7 +232,14 @@ export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUs
     }
   }
 
-  private leave () : void {
+  private leave (reason ?: string) : void {
+
+    if (reason)
+      this.$nuxt.$toast.show(reason!, {
+        type: 'error',
+        position: 'top-center'
+      })
+
     this.$router.push(
       this.lowercaseGame
         ? `/${this.lowercaseGame}/${
@@ -256,6 +263,9 @@ export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUs
 
     events.forEach(event => {
       switch (event.type) {
+        case LongPollingEventType.ROOM_HAS_BEEN_REMOVED:
+          this.leave(<string> this.$t('rooms.room-has-been-closed'))
+          return
         case LongPollingEventType.CHAT_MESSAGE:
           message = event.payload
           this.room!.messages.push(message)
