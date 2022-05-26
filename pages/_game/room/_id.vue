@@ -141,6 +141,7 @@
       <chat
         :messages="room.messages"
         :room-id="room.id"
+        class="chat"
       />
     </div>
 
@@ -163,7 +164,7 @@ import GameAwarePageMixin from '~/mixin/GameAwarePageMixin'
 import LoggedUserAwarePageMixin, { asyncData as LoggedUserAwarePageMixinAsyncData } from '~/mixin/LoggedUserAwarePageMixin'
 import WindowFocusAwareMixin from '~/mixin/WindowFocusAwareMixin'
 
-import { Component, mixins, Watch } from 'nuxt-property-decorator'
+import { Component, mixins } from 'nuxt-property-decorator'
 import { Context } from '@nuxt/types'
 
 import Location from '~/domain/Location'
@@ -308,19 +309,15 @@ export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUs
     clearTimeout(this.pingTimeoutId)
   }
 
-  protected mounted () : void {
+  private setupLongPoller () : void {
     this.longPoller = new LongPoller<LongPollingEvent<User | any>[]>(
       this.$axios,
       `/api/room/subscribe_to_event?id=${this.room!.id}`,
       events => this.consumeLongPollingEvents(events)
     )
+  }
 
-    console.error('TODO client', [
-      'try-catch every asyncData & redirect to custom error page or an interceptor redirecting on error if process.server',
-      'custom error page 404',
-      'custom error api request'
-    ])
-
+  private setupPing () : void {
     const pingIntervalInMs = 10_000
 
     const doPing = () => {
@@ -334,6 +331,18 @@ export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUs
     }
 
     doPing()
+  }
+
+  protected mounted () : void {
+
+    console.error('TODO client', [
+      'try-catch every asyncData & redirect to custom error page or an interceptor redirecting on error if process.server',
+      'custom error page 404',
+      'custom error api request'
+    ])
+
+    this.setupLongPoller()
+    this.setupPing()
   }
 
 }
@@ -373,5 +382,14 @@ export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUs
     overflow-y: auto;
     overflow-x: hidden;
   }
+</style>
 
+<style>
+
+  .main-application-container.mobile .chat {
+    /* prevents it to be shrinked down to a 30px line when on screen keyboard is open */
+    min-height: 200px;
+    background: #121212;
+    z-index: 999;
+  }
 </style>

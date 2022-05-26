@@ -37,7 +37,7 @@ import '~/static/main.css'
 })
 export default class DefaultLayout extends Vue {
 
-  private mounted () {
+  private setupWindowOnFocusEventListener () : void {
     const previousWindowOnFocus = window.onfocus
 
     window.onfocus = function () {
@@ -47,6 +47,10 @@ export default class DefaultLayout extends Vue {
 
       document.dispatchEvent(new CustomEvent('window.onfocus'))
     }
+  }
+
+  private mounted () {
+    this.setupWindowOnFocusEventListener()
   }
 
 }

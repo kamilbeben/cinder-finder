@@ -105,10 +105,17 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
   padding-right: .5rem;
 }
 
-.list > div:not(.reset-css), .list > a {
+.list > div:not(.reset-css),
+.list > a {
   background: #21252964;
   padding: .25em .5em;
   margin-top: .5em;
+}
+
+.main-application-container.mobile .list > div:not(.reset-css),
+.main-application-container.mobile .list > a {
+  margin-top: .25em;
+  padding: .15em .35em;
 }
 
 .pointer, .pointer * {
