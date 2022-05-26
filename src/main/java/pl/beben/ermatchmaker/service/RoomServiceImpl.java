@@ -84,6 +84,7 @@ public class RoomServiceImpl implements RoomService {
       .ifPresent(room -> {
         rooms.remove(room);
         publishGeneralEvent(room, new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_REMOVED, room));
+        publishRoomEvent(room.getId(), new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_REMOVED, room));
       });
   }
 
