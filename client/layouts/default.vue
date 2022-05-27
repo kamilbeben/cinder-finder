@@ -12,8 +12,12 @@
     <v-app-bar
       fixed
       app
+      class="app-bar"
     >
-      <v-toolbar-title v-text="$t('toolbar.title')"/>
+      <v-toolbar-title
+        class="toolbar-title"
+        v-text="$t('toolbar.title')"
+      />
       <v-spacer/>
     </v-app-bar>
 
@@ -55,3 +59,23 @@ export default class DefaultLayout extends Vue {
 
 }
 </script>
+
+<style scoped>
+
+  .main-application-container .app-bar {
+    display: flex;
+    background-color: #062828;
+    background-image: linear-gradient(45deg, #011515 0%, #0a413f 36%, #799679 60%, #011515 100%);
+  }
+
+  .main-application-container >>> .app-bar > .v-toolbar__content {
+    margin: auto;
+  }
+
+  .toolbar-title {
+    text-shadow: 0 0 1rem #eaf67e;
+    color: #fcfef6;
+    overflow: visible;
+  }
+
+</style>

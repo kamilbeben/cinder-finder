@@ -1,6 +1,8 @@
 
 export default {
-  'toolbar.title': 'CinderFinder',
+  'toolbar': {
+    'title': 'CinderFinder'
+  },
 
   'common': {
     'room-name': 'Room name',
