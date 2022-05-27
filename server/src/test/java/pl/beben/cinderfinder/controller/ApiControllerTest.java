@@ -22,11 +22,13 @@ import pl.beben.cinderfinder.domain.RoomType;
 import pl.beben.cinderfinder.pojo.*;
 import pl.beben.cinderfinder.pojo.event.AbstractEvent;
 import pl.beben.cinderfinder.pojo.event.ChatMessageEvent;
+import pl.beben.cinderfinder.pojo.event.IdentifiedRoomEvent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -35,7 +37,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @SpringBootTest(properties = {
   "matchmaker.room.ping-interval=100ms",
-  "matchmaker.room.kick-after=600ms"
+  "matchmaker.room.kick-after=600ms",
+  "missed-host-ping-count-limit=10"
 })
 class ApiControllerTest {
 
@@ -123,6 +126,37 @@ class ApiControllerTest {
     Assert.assertEquals(chattyUserInGameName, chatMessageEvent.getPayload().getUser().getInGameName());
     Assert.assertEquals(chatMessageContent, chatMessageEvent.getPayload().getContent());
     Assert.assertNotNull(chatMessageEvent.getPayload().getTimestamp());
+  }
+
+  @Test
+  public void roomHasBeenClosedAfterHostInactivityTest() throws Exception {
+
+    // given
+    final var hostUserAuthentication = createAuthentication();
+    final var roomId = httpCreateRoomReturningId(hostUserAuthentication);
+
+    // when
+    // room should be closed after 10 missed pings, let's also make sure that it won't be closed after 15 regular pings
+    for (var i = 0; i < 15; i++) {
+      httpRoomPing(hostUserAuthentication, roomId);
+      Thread.sleep(100l); // ping interval, see class annotations
+    }
+
+    // given
+    var roomDetails = httpRoomRegisterToAndGetRoomDetails(createAuthentication(), roomId);
+
+    // then assert that room wasn't closed
+    Assert.assertNotNull(roomDetails);
+    Assert.assertEquals(roomId, roomDetails.getId());
+
+    // room is expected to be closed after 10 * ping_interval because the host is not pinging it
+    Thread.sleep(2000l);
+
+    // given
+    roomDetails = httpRoomRegisterToAndGetRoomDetails(createAuthentication(), roomId);
+
+    // then assert that room wasn't closed
+    Assert.assertNull(roomDetails);
   }
 
   @Test

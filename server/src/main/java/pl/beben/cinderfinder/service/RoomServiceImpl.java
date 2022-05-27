@@ -34,6 +34,9 @@ public class RoomServiceImpl implements RoomService {
   
   private final UserService userService;
 
+  @Value("${matchmaker.room.missed-host-ping-count-limit}")
+  private Integer missedHostPingCountLimit;
+
   @Value("${matchmaker.room.ping-interval}")
   private Duration pingInterval;
 
@@ -79,13 +82,7 @@ public class RoomServiceImpl implements RoomService {
 
   @Override
   public void closeRoomOwnedByCurrentUser() {
-
-    getRoomOwnedByCurrentUser()
-      .ifPresent(room -> {
-        rooms.remove(room);
-        publishGeneralEvent(room, new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_REMOVED, room));
-        publishRoomEvent(room.getId(), new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_REMOVED, room));
-      });
+    getRoomOwnedByCurrentUser().ifPresent(this::closeRoom);
   }
 
   @Override
@@ -106,7 +103,7 @@ public class RoomServiceImpl implements RoomService {
       updateIsOnlineFlagOnAllUsers(room);
     }
 
-    return room;
+    return getById(id); // getById is called once again, because the room could've been closed due to host inactivity during 'updateIsOnlineFlagOnAllUsers'
   }
 
   @Override
@@ -249,8 +246,15 @@ public class RoomServiceImpl implements RoomService {
     userNameToPingTimestamp
       .forEach((userName, pingTimestamp) -> {
         final var user = userService.getByUserName(userName);
+        final var userIsHost = Objects.equals(userName, room.getHost().getUserName());
         final var userIsOnline = lowerPingTimestampLimitForUserToBeConsideredOnline < pingTimestamp;
-        final var userShouldBeKickedOut = !Objects.equals(userName, room.getHost().getUserName()) && lowerPingTimestampLimitForUserToBeKickedOut >= pingTimestamp;
+        final var userShouldBeKickedOut = !userIsHost && lowerPingTimestampLimitForUserToBeKickedOut >= pingTimestamp;
+        final var roomShouldBeClosed = userIsHost && System.currentTimeMillis() - (missedHostPingCountLimit * pingInterval.toMillis()) >= pingTimestamp;
+
+        if (roomShouldBeClosed) {
+          closeRoom(room);
+          return;
+        }
 
         if (room.updateIsOnlineFlagByUserName(userName, userIsOnline))
           events.add(
@@ -292,7 +296,13 @@ public class RoomServiceImpl implements RoomService {
           publishRoomEvent(room.getId(), new UserEvent(Type.USER_HAS_LEFT, currentUser));
       });
   }
-  
+
+  private void closeRoom(RoomDetails room) {
+    rooms.remove(room);
+    publishGeneralEvent(room, new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_REMOVED, room));
+    publishRoomEvent(room.getId(), new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_REMOVED, room));
+  }
+
   private void publishGeneralEvent(RoomDraftPojo room, AbstractEvent event) {
     publishGeneralEvent(room.getGame(), room.getPlatform(), Arrays.asList(event));
   }
