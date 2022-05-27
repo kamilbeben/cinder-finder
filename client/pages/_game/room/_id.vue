@@ -149,7 +149,7 @@
       <v-btn
         class="ml-auto"
         color="error"
-        @click="leave"
+        @click="() => leave()"
       >
         {{ $t(roomIsOwnedByLoggedUser ? 'room.close' : 'room.leave') }}
       </v-btn>
@@ -233,6 +233,8 @@ export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUs
   }
 
   private leave (reason ?: string) : void {
+
+    console.log('leave', !!reason, reason)
 
     if (reason)
       this.$nuxt.$toast.show(reason!, {
