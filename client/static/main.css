@@ -1,0 +1,147 @@
+
+/* scrollbar start */
+/* modified semantic ui scrollbar */
+.main-application-container.desktop ::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 0.3rem !important;
+  height: 0.3rem !important;
+  background-color: #F5F5F5 !important;
+}
+
+body .main-application-container.desktop ::-webkit-scrollbar-thumb {
+  cursor: pointer;
+  border-radius: 5px;
+  background: rgba(0,0,0,.25);
+  -webkit-transition: color .2s ease;
+  transition: color .2s ease;
+}
+
+.main-application-container.desktop ::-webkit-scrollbar-thumb {
+  -webkit-appearance: none;
+  background: rgba(0, 0, 0, 0.5) !important;
+  -webkit-transition: color .2s ease !important;
+  transition: color .2s ease !important;
+}
+
+body .main-application-container.desktop ::-webkit-scrollbar-track {
+  background: rgba(0,0,0,.1);
+  border-radius: 0;
+}
+.main-application-container.desktop ::-webkit-scrollbar-track {
+  -webkit-appearance: none;
+  background: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* scrollbar end */
+
+html, body {
+  overflow: hidden !important;
+}
+
+html,
+body,
+body > #__nuxt,
+body > #__nuxt > #__layout,
+body > #__nuxt > #__layout > .v-application,
+body > #__nuxt > #__layout > .v-application > .v-application--wrap {
+  min-height: 100%;
+  height: 100%;
+}
+
+.v-application--wrap > .v-main {
+  overflow: hidden;
+  flex: 1 1 auto;
+}
+
+.flex.equal-width {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.flex.equal-width.margin-between-sm > *:not(:first-child) {
+  margin-left: .5em;
+}
+
+.flex.equal-width > * {
+  flex: 1 1 auto;
+  width: 0;
+  min-width: 0;
+}
+
+.margin-top-sm {
+  margin-top: .5em;
+}
+
+.page-default {
+  height: inherit;
+  margin: auto;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.button-group {
+  width: 100%;
+  display: flex;
+}
+
+.button-group > * {
+  flex: 1 1 auto;
+  width: auto;
+}
+
+.toast-message {
+  font-family: "Roboto", sans-serif;
+}
+
+.muted {
+  font-size: .8em;
+  opacity: .8;
+}
+
+.main-application-container.desktop .list {
+  padding-right: .5rem;
+}
+
+.list > div:not(.reset-css),
+.list > a {
+  background: #21252964;
+  padding: .25em .5em;
+  margin-top: .5em;
+}
+
+.main-application-container.mobile .list > div:not(.reset-css),
+.main-application-container.mobile .list > a {
+  margin-top: .25em;
+  padding: .15em .35em;
+}
+
+.pointer, .pointer * {
+  cursor: pointer;
+}
+
+.clear-css-nuxt-link {
+  color: unset !important;
+  text-decoration: unset !important;
+}
+
+.checkbox-group .v-messages {
+  display: none;
+}
+
+.checkbox-group .v-input__slot {
+  margin-bottom: 0;
+}
+
+.v-input input[type="number"]::-webkit-outer-spin-button
+.v-input input[type="number"]::-webkit-inner-spin-button {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
+.v-input input[type="number"],
+.v-input input[type="number"]:hover {
+  -moz-appearance: textfield !important;
+}
