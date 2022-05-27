@@ -1,6 +1,6 @@
 
 export default {
-  'toolbar.title': 'ERMatchmaker',
+  'toolbar.title': 'CinderFinder',
 
   'common': {
     'room-name': 'Room name',

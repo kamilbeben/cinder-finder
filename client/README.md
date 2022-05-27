@@ -1,4 +1,4 @@
-# ermatchmaker-client
+# cinder-finder-client
 
 ## Build Setup
 
