@@ -17,7 +17,12 @@ import CardLink from '~/components/CardLink.vue'
   name: 'IndexPage',
   components: {
     CardLink
-  }
+  },
+  middleware: [
+    function ({ redirect }) {
+      redirect('/elden_ring')
+    }
+  ]
 })
 export default class IndexPage extends Vue {
 
