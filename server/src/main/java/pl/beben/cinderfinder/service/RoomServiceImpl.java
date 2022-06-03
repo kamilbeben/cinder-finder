@@ -18,7 +18,6 @@ import pl.beben.cinderfinder.service.utils.QueryUtils;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static pl.beben.cinderfinder.pojo.event.AbstractEvent.Type;
@@ -26,12 +25,7 @@ import static pl.beben.cinderfinder.pojo.event.AbstractEvent.Type;
 @Service
 @RequiredArgsConstructor
 public class RoomServiceImpl implements RoomService {
-  
-  final UserPojo testUser1 = new UserPojo("Guest2132", "Arek", null);
-  final UserPojo testUser2 = new UserPojo("Guest2133", "Bezik", null);
-  final UserPojo testUser3 = new UserPojo("Guest2134", "Fok", null);
-  final UserPojo testUser4 = new UserPojo("Guest2135", "Kupa", null);
-  
+
   private final UserService userService;
 
   @Value("${matchmaker.room.missed-host-ping-count-limit}")
@@ -42,28 +36,12 @@ public class RoomServiceImpl implements RoomService {
 
   @Value("${matchmaker.room.kick-after}")
   private Duration kickAfter;
-  
+
   private final Map<Long, Map<String, Long>> roomIdToUserNameToPingTimestamp = new ConcurrentHashMap<>();
   private final Map<Long, Set<DeferredResult<List<AbstractEvent>>>> roomIdToEventSubscribers = new ConcurrentHashMap<>();
   private final Map<String, Set<DeferredResult<List<AbstractEvent>>>> generalEventKeyToEventSubscribers = new ConcurrentHashMap<>();
 
-  private final List<RoomDetails> rooms = Collections.synchronizedList(new ArrayList<>(
-    Arrays.asList(
-      new RoomDetails(nextId(), testUser1, new RoomDraftPojo(Game.ELDEN_RING, Platform.PSX, RoomType.COOP, "First room", "Help plz", "ghzx", "Beastman of Farum Azula (Limgrave)", 23))
-        .addGuest(testUser2)
-        .addGuest(testUser3)
-        .addMessage(new ChatMessage(testUser1, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5l), "There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration"))
-        .addMessage(new ChatMessage(testUser2, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(2l), "All the Lorem Ipsum generators on the Internet tend to repeat predefined chunks as necessary, making this the first true generator on the Internet."))
-        .addMessage(new ChatMessage(testUser4, System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(1l), "no xD")),
-      new RoomDetails(nextId(), testUser2, new RoomDraftPojo(Game.ELDEN_RING, Platform.PSX, RoomType.COOP, "Second room", "Help plz", "ghzx", "Beastman of Farum Azula (Limgrave)", null))
-        .addGuest(testUser4)
-        .addGuest(testUser3)
-        .addGuest(testUser1),
-      new RoomDetails(nextId(), testUser3, new RoomDraftPojo(Game.ELDEN_RING, Platform.PSX, RoomType.PVP, "Third room", "Help plz", "ghzx", "Bloodhound Knight Darriwil (Limgrave)", 55)),
-      new RoomDetails(nextId(), testUser4, new RoomDraftPojo(Game.ELDEN_RING, Platform.PSX, RoomType.PVP, "Fourth room", "Help plz", "ghzx", "Deathbird (Limgrave)", 34)),
-      new RoomDetails(nextId(), testUser2, new RoomDraftPojo(Game.ELDEN_RING, Platform.XBOX, RoomType.COOP, "Fifth room", "Help plz", "ghzx", "Demi-Human Chief (Limgrave)", 133))
-    )
-  ));
+  private final List<RoomDetails> rooms = Collections.synchronizedList(new ArrayList<>());
 
   // specific room
 
@@ -228,7 +206,7 @@ public class RoomServiceImpl implements RoomService {
       .filter(room -> Objects.equals(room.getHost().getUserName(), userService.getCurrentUser().getUserName()))
       .findAny();
   }
-  
+
   private void updateIsOnlineFlagOnAllUsers(RoomDetails room) {
     updateIsOnlineFlagOnAllUsers(
       room,
@@ -240,7 +218,7 @@ public class RoomServiceImpl implements RoomService {
 
     final var lowerPingTimestampLimitForUserToBeKickedOut = System.currentTimeMillis() - kickAfter.toMillis();
     final var lowerPingTimestampLimitForUserToBeConsideredOnline = System.currentTimeMillis() - (2 * pingInterval.toMillis());
-    
+
     final var events = new ArrayList<AbstractEvent>();
 
     userNameToPingTimestamp
@@ -264,13 +242,13 @@ public class RoomServiceImpl implements RoomService {
                 : Type.USER_IS_OFFLINE,
               user
             ));
-        
+
         if (userShouldBeKickedOut) {
           if (room.removeGuestByUserName(user.getUserName()))
             events.add(new UserEvent(Type.USER_HAS_LEFT, user));
         }
       });
-    
+
     publishRoomEvent(room.getId(), events);
   }
 
@@ -287,7 +265,7 @@ public class RoomServiceImpl implements RoomService {
       room.getGuests().stream()
         .anyMatch(guest -> Objects.equals(guest.getUserName(), currentUser.getUserName()));
   }
-  
+
   private void removeCurrentUserFromOtherRooms(UserPojo currentUser, RoomDetails currentRoom) {
     rooms.stream()
       .filter(room -> currentRoom == null || !Objects.equals(room.getId(), currentRoom.getId()))
@@ -317,7 +295,7 @@ public class RoomServiceImpl implements RoomService {
     originalEventSubscribers.clear();
     eventSubscribers.forEach(deferredResult -> deferredResult.setResult(events));
   }
-  
+
   private void publishRoomEvent(Long roomId, AbstractEvent event) {
     publishRoomEvent(roomId, Arrays.asList(event));
   }
@@ -341,5 +319,5 @@ public class RoomServiceImpl implements RoomService {
   private static synchronized long nextId() {
     return ++idSequence;
   }
-  
+
 }
