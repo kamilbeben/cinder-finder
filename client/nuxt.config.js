@@ -5,8 +5,7 @@ import I18nEN from './i18n/en'
 export default {
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
-    titleTemplate: '%s - cinder-finder-client',
-    title: 'cinder-finder-client',
+    title: 'Cinder Finder',
     meta: [
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },

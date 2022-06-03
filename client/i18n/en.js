@@ -1,7 +1,7 @@
 
 export default {
   'toolbar': {
-    'title': 'CinderFinder'
+    'title': 'Cinder Finder'
   },
 
   'common': {

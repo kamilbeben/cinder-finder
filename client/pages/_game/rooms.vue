@@ -240,7 +240,7 @@ function enrichRoomsWithLocation (rooms : IdentifiedRoom[], game : Game) : Ident
         id: room.locationId,
         name: room.locationId,
         groupName: '',
-        type: LocationType.AREA
+        type: LocationType.BOSS
       }
   }))
 }
