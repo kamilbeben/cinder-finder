@@ -34,10 +34,7 @@
 
       <!-- type -->
       <v-list-item-avatar>
-        <v-icon
-          v-if="data.item.type === 'BOSS'"
-          v-text="'mdi-google-downasaur'"
-        />
+        <location-icon :type="data.item.type"/>
       </v-list-item-avatar>
 
       <!-- name -->
@@ -63,12 +60,17 @@
 
 import { Component, Prop, Vue } from 'nuxt-property-decorator'
 
+import LocationIcon from './LocationIcon.vue'
+
 import Location, { LocationId } from '~/domain/Location'
 import Game from '~/domain/Game'
 import GameToLocations from '~/static/GameToLocations'
 
 @Component({
-  name: 'LocationPicker'
+  name: 'LocationPicker',
+  components: {
+    LocationIcon
+  }
 })
 export default class LocationPicker extends Vue {
 

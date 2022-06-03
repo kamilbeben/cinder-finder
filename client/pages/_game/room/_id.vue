@@ -42,10 +42,7 @@
       :href="locationGoogleSearchHref"
       target="_blank"
     >
-      <v-icon
-        class="my-auto"
-        v-text="'mdi-google-downasaur'"
-      />
+      <location-icon :type="location.type"/>
       <div
         class="location-name ml-2 my-auto"
         v-text="`${location.name} (${location.groupName})`"
@@ -171,6 +168,7 @@ import Location from '~/domain/Location'
 import GameToLocations from '~/static/GameToLocations'
 
 import Chat from '~/components/Chat.vue'
+import LocationIcon from '~/components/LocationIcon.vue'
 import LongPoller from '~/service/LongPoller'
 import LongPollingEvent, { Type as LongPollingEventType } from '~/domain/LongPollingEvent'
 
@@ -181,7 +179,8 @@ import RoomMember from '~/domain/RoomMember'
 @Component({
   name: 'RoomDetailsPage',
   components: {
-    Chat
+    Chat,
+    LocationIcon
   }
 })
 export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUserAwarePageMixin, WindowFocusAwareMixin) {

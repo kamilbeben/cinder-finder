@@ -89,9 +89,8 @@
               <div
                 class="mt-1 mb-auto muted d-flex"
               >
-                <v-icon
-                  class="my-auto"
-                  v-text="'mdi-google-downasaur'"
+                <location-icon
+                  :type="room.location.type"
                 />
                 <div
                   class="location-name ml-2 my-auto"
@@ -210,6 +209,7 @@ import { Component, mixins, Ref, Vue, Watch } from 'nuxt-property-decorator'
 import PlatformPicker from '~/components/PlatformPicker.vue'
 import RoomTypePicker from '~/components/RoomTypePicker.vue'
 import LocationPicker from '~/components/LocationPicker.vue'
+import LocationIcon from '~/components/LocationIcon.vue'
 
 import Location, { LocationId } from '~/domain/Location'
 import GameToLocations from '~/static/GameToLocations'
@@ -296,6 +296,7 @@ async function fetchRooms (
   name: 'ListRoomsPage',
   components: {
     LocationPicker,
+    LocationIcon,
     PlatformPicker,
     RoomTypePicker
   }

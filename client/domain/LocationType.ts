@@ -1,7 +1,7 @@
 
 enum LocationType {
-  AREA = 'AREA',
-  BOSS = 'BOSS'
+  BOSS = 'BOSS',
+  BONFIRE = 'BONFIRE'
 }
 
 export default LocationType
