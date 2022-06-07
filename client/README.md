@@ -1,4 +1,4 @@
-# cinder-finder-client
+# furled-finger-client
 
 ## Build Setup
 

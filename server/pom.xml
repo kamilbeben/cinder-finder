@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>pl.beben</groupId>
-    <artifactId>cinder-finder</artifactId>
+    <artifactId>furled-finger-server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>CinderFinder</name>
-    <description>Demo project for Spring Boot</description>
+    <name>Furled Finger Server</name>
+    <description>Furled Finger Server</description>
     <properties>
         <java.version>11</java.version>
     </properties>
