@@ -8,11 +8,15 @@
       :                     'mobile'
     "
   >
-
+    <!--
+      height is set because it's skipping on load which was reported as a bug and then ignored
+      https://github.com/vuetifyjs/vuetify/issues/5198
+    -->
     <v-app-bar
       fixed
       app
       class="app-bar"
+      :height="$device.isDesktopOrTablet ? 64 : 56"
     >
       <v-toolbar-title
         class="toolbar-title"
