@@ -76,6 +76,8 @@ export default class DefaultLayout extends Vue {
     text-shadow: 0 0 1rem #eaf67e;
     color: #fcfef6;
     overflow: visible;
+    font-family: 'Cinzel', serif;
+    font-weight: bold;
   }
 
 </style>

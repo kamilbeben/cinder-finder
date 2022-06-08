@@ -35,7 +35,9 @@ export default {
     // https://go.nuxtjs.dev/vuetify
     '@nuxtjs/vuetify',
     // https://typescript.nuxtjs.org/guide/setup
-    '@nuxt/typescript-build'
+    '@nuxt/typescript-build',
+    // https://google-fonts.nuxtjs.org/setup
+    '@nuxtjs/google-fonts'
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
@@ -108,6 +110,19 @@ export default {
           success: colors.green.accent3
         }
       }
+    }
+  },
+
+  googleFonts: {
+    prefetch: true,
+    preconnect: true,
+    preload: true,
+    overwriting: false,
+    families: {
+      'Cinzel': {
+        wght: [ 600 ]    
+      },
+      'Open+Sans': true
     }
   },
 

@@ -48,6 +48,10 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
   height: 100%;
 }
 
+.v-application {
+  font-family: 'Open Sans', sans-serif;
+}
+
 .v-application--wrap > .v-main {
   overflow: hidden;
   flex: 1 1 auto;
