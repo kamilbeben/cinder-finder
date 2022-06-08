@@ -82,9 +82,9 @@ export default {
   },
 
   toast: {
-      position: 'bottom-left',
-      className: 'toast-message',
-      duration: 5000
+    position: 'bottom-left',
+    className: 'toast-message',
+    duration: 5000
   },
 
   // PWA module configuration: https://go.nuxtjs.dev/pwa
