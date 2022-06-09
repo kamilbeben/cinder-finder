@@ -6,6 +6,11 @@
     :items="locations"
     :multiple="multiple"
     :chips="multiple"
+    :rules="
+      isRequired
+        ? [RuleFactory.isRequired()]
+        : []
+    "
     class="locations-autocomplete"
     item-text="name"
     item-value="id"
@@ -60,8 +65,9 @@
 
 import { Component, Prop, Vue } from 'nuxt-property-decorator'
 
-import LocationIcon from './LocationIcon.vue'
+import RuleFactory from '~/service/RuleFactory'
 
+import LocationIcon from './LocationIcon.vue'
 import Location, { LocationId } from '~/domain/Location'
 import Game from '~/domain/Game'
 import GameToLocations from '~/static/GameToLocations'
@@ -73,12 +79,17 @@ import GameToLocations from '~/static/GameToLocations'
   }
 })
 export default class LocationPicker extends Vue {
+  
+  private readonly RuleFactory = new RuleFactory(this)
 
   @Prop([ String, Array ])
   private readonly value !: LocationId | LocationId[]
 
   @Prop({ type: String, required: true })
   private readonly game !: Game
+
+  @Prop(Boolean)
+  private readonly isRequired !: boolean
 
   @Prop(Boolean)
   private readonly multiple !: boolean

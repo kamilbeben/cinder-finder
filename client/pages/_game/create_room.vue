@@ -30,6 +30,7 @@
       <location-picker
         v-model="roomDraft.locationId"
         :game="game"
+        is-required
       />
 
       <v-text-field
