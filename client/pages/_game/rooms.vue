@@ -31,7 +31,7 @@
         />
       </div>
 
-      <div class="list">
+      <div class="room-list list">
         <div
           v-if="rooms.length === 0"
           class="muted px-4 py-2"
@@ -448,3 +448,17 @@ export default class RoomsPage extends mixins(GameAwarePageMixin, LoggedUserAwar
 
 }
 </script>
+
+<style scoped>
+
+  .page-default, .room-list {
+    flex: 1 1 auto;
+    height: 0;
+  }
+
+  .room-list {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+</style>

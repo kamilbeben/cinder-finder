@@ -53,7 +53,8 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
 }
 
 .v-application--wrap > .v-main {
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   flex: 1 1 auto;
 }
 
@@ -76,11 +77,15 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
   margin-top: .5em;
 }
 
-.page-default {
-  height: inherit;
-  margin: auto;
-  width: 100%;
+.main-application-container:not(.mobile) .page-default {
   max-width: 500px;
+}
+
+.page-default {
+  flex: auto;
+  height: inherit;
+  margin: 0 auto;
+  width: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -128,8 +133,8 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
   }
 }
 
-.main-application-container .page-default,
-.main-application-container .page-default > .form {
+.page-default,
+.page-default > .form {
   height: inherit;
   display: flex;
   flex-direction: column;

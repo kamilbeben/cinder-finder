@@ -27,7 +27,7 @@
     </v-app-bar>
 
     <v-main>
-      <v-container fill-height>
+      <v-container class="nuxt-container">
         <nuxt/>
       </v-container>
     </v-main>
@@ -85,6 +85,12 @@ export default class DefaultLayout extends Vue {
 
   .main-application-container >>> .app-bar > .v-toolbar__content {
     margin: auto;
+  }
+
+  .nuxt-container {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   .toolbar-title {

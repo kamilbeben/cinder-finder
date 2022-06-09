@@ -83,25 +83,24 @@
           RuleFactory.min(1)
         ]"
       />
-
-      <div class="mt-4 flex equal-width margin-between-sm action-buttons">
-        <v-btn
-          color="success"
-          :loading="submitActionIsInProgress"
-          @click="submit"
-        >
-          {{ $t('create-room.submit') }}
-        </v-btn>
-
-        <v-btn
-          color="error"
-          @click="cancel"
-        >
-          {{ $t('create-room.cancel') }}
-        </v-btn>
-      </div>
-
     </v-form>
+
+    <div class="mt-4 flex equal-width margin-between-sm action-buttons">
+      <v-btn
+        color="success"
+        :loading="submitActionIsInProgress"
+        @click="submit"
+      >
+        {{ $t('create-room.submit') }}
+      </v-btn>
+
+      <v-btn
+        color="error"
+        @click="cancel"
+      >
+        {{ $t('create-room.cancel') }}
+      </v-btn>
+    </div>
   </div>
 </template>
 

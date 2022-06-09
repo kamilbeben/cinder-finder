@@ -30,3 +30,9 @@ export default class IndexPage extends mixins(GameAwarePageMixin) {
 
 }
 </script>
+
+<style scoped>
+  .page-default {
+    flex: 1 1 auto;
+  }
+</style>
