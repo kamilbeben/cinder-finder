@@ -142,7 +142,7 @@
       />
     </div>
 
-    <div class="mt-4 d-flex">
+    <div class="mt-4 d-flex action-buttons">
       <v-btn
         class="ml-auto"
         color="error"

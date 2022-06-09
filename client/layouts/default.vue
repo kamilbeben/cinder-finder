@@ -1,11 +1,12 @@
 <template>
   <v-app
-    dark
     class="main-application-container"
-    :class="
-        $device.isDesktop ? 'desktop'
-      : $device.isTablet  ? 'tablet'
-      :                     'mobile'
+    :class="{
+      'desktop': $device.isDesktop,
+      'tablet': $device.isTablet,
+      'mobile': !$device.isDesktop && !$device.isTablet,
+      'chat-is-focused': chatIsFocused
+    }
     "
   >
     <!--
@@ -45,6 +46,8 @@ import '~/static/main.css'
 })
 export default class DefaultLayout extends Vue {
 
+  private chatIsFocused : boolean = false
+
   private setupWindowOnFocusEventListener () : void {
     const previousWindowOnFocus = window.onfocus
 
@@ -59,6 +62,14 @@ export default class DefaultLayout extends Vue {
 
   private mounted () {
     this.setupWindowOnFocusEventListener()
+
+    this.$nuxt.$on('chat.focus', () => {
+      this.chatIsFocused = true
+    })
+
+    this.$nuxt.$on('chat.blur', () => {
+      this.chatIsFocused = false
+    })
   }
 
 }
@@ -77,7 +88,7 @@ export default class DefaultLayout extends Vue {
   }
 
   .toolbar-title {
-    text-shadow: 0 0 1rem #eaf67e;
+    text-shadow: 0 0 .25rem #eaf67e;
     color: #fcfef6;
     overflow: visible;
     font-family: 'Cinzel', serif;

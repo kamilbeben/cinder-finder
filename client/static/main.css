@@ -122,6 +122,28 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
   padding: .15em .35em;
 }
 
+@media (max-height:600px) {
+  .main-application-container.mobile.chat-is-focused .action-buttons {
+    display: none !important;
+  }
+}
+
+.main-application-container .page-default,
+.main-application-container .page-default > .form {
+  height: inherit;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-application-container .action-buttons {
+  padding-top: 1em; /* min-margin-top */
+  margin-top: auto !important;
+}
+
+.action-buttons > * {
+  margin-top: auto;
+}
+
 .pointer, .pointer * {
   cursor: pointer;
 }
@@ -148,4 +170,14 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
 .v-input input[type="number"],
 .v-input input[type="number"]:hover {
   -moz-appearance: textfield !important;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

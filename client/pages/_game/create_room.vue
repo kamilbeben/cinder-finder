@@ -3,6 +3,7 @@
     <v-form
       v-if="game"
       v-model="formIsValid"
+      class="form"
       ref="form"
     >
       
@@ -83,7 +84,7 @@
         ]"
       />
 
-      <div class="mt-4 flex equal-width margin-between-sm">
+      <div class="mt-4 flex equal-width margin-between-sm action-buttons">
         <v-btn
           color="success"
           :loading="submitActionIsInProgress"

@@ -42,7 +42,7 @@
           v-for="room in rooms"
           :key="room.id"
           :to="`/${lowercaseGame}/room/${room.id}`"
-          class="room d-flex pointer clear-css-nuxt-link"
+          class="room d-flex pointer clear-css-nuxt-link overflow-hidden"
         >
 
           <!-- is host online && room type -->
@@ -60,17 +60,17 @@
             "
           />
 
-          <div class="ml-2 d-flex flex-column flex-fill">
+          <div class="ml-2 d-flex flex-column flex-fill overflow-hidden">
 
             <div class="d-flex">
               <!-- room name -->
               <div
-                class="ml-2 my-auto"
+                class="ml-2 my-auto ellipsis"
                 v-text="room.name"
               />
               <!-- host name -->
               <div
-                class="my-auto ml-auto"
+                class="my-auto ml-auto ellipsis"
                 v-text="
                   (
                     room.host.inGameName ||
@@ -106,16 +106,6 @@
 
           </div>
         </nuxt-link>
-      </div>
-
-      <div class="mt-4 d-flex">
-        <v-btn
-          class="ml-auto"
-          color="error"
-          @click="() => $router.push(`/${lowercaseGame}`)"
-        >
-          {{ $t('room.go-back') }}
-        </v-btn>
       </div>
 
       <v-navigation-drawer
@@ -194,8 +184,17 @@
 
         </div>
       </v-navigation-drawer>
-
     </template>
+
+    <div class="mt-4 d-flex action-buttons">
+      <v-btn
+        class="ml-auto"
+        color="error"
+        @click="() => $router.push(`/${lowercaseGame}`)"
+      >
+        {{ $t('room.go-back') }}
+      </v-btn>
+    </div>
   </div>
 </template>
 
