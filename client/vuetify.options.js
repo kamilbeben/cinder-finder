@@ -6,9 +6,9 @@ export default {
   customVariables: ['~/assets/variables.scss'],
   treeShake: true,
   theme: {
-    dark: true,
+    dark: false,
     themes: {
-      dark: {
+      light: {
         primary: colors.blue.darken2,
         accent: colors.grey.darken3,
         secondary: colors.amber.darken3,

@@ -4,8 +4,7 @@
     :class="{
       'desktop': $device.isDesktop,
       'tablet': $device.isTablet,
-      'mobile': !$device.isDesktop && !$device.isTablet,
-      'chat-is-focused': chatIsFocused
+      'mobile': !$device.isDesktop && !$device.isTablet
     }
     "
   >
@@ -46,8 +45,6 @@ import '~/static/main.css'
 })
 export default class DefaultLayout extends Vue {
 
-  private chatIsFocused : boolean = false
-
   private setupWindowOnFocusEventListener () : void {
     const previousWindowOnFocus = window.onfocus
 
@@ -62,14 +59,6 @@ export default class DefaultLayout extends Vue {
 
   private mounted () {
     this.setupWindowOnFocusEventListener()
-
-    this.$nuxt.$on('chat.focus', () => {
-      this.chatIsFocused = true
-    })
-
-    this.$nuxt.$on('chat.blur', () => {
-      this.chatIsFocused = false
-    })
   }
 
 }

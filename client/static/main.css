@@ -49,7 +49,12 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
 }
 
 .v-application {
-  font-family: 'Open Sans', sans-serif;
+  background-color: #e5e5e5 !important;
+  font-family: 'Open Sans', sans-serif !important;
+}
+
+.toast-message {
+  font-family: 'Open Sans', sans-serif !important;
 }
 
 .v-application--wrap > .v-main {
@@ -58,30 +63,10 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
   flex: 1 1 auto;
 }
 
-.flex.equal-width {
-  display: flex;
-  flex-wrap: nowrap;
-}
-
-.flex.equal-width.margin-between-sm > *:not(:first-child) {
-  margin-left: .5em;
-}
-
-.flex.equal-width > * {
-  flex: 1 1 auto;
-  width: 0;
-  min-width: 0;
-}
-
-.margin-top-sm {
-  margin-top: .5em;
-}
-
-.main-application-container:not(.mobile) .page-default {
-  max-width: 500px;
-}
-
 .page-default {
+  background-color: white;
+  padding: .5em;
+  border-radius: .25em;
   flex: auto;
   height: inherit;
   margin: 0 auto;
@@ -89,6 +74,11 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.main-application-container:not(.mobile) .page-default {
+  max-width: 700px;
+  padding: 1em;
 }
 
 .button-group {
@@ -101,8 +91,19 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
   width: auto;
 }
 
-.toast-message {
-  font-family: "Roboto", sans-serif;
+.v-btn-toggle > .v-btn::before {
+  opacity: 1;
+  transition: unset !important;
+  background-color: transparent;
+}
+
+.v-btn-toggle > .v-btn--active::before {
+  opacity: 1;
+  background-color: #1565c0;
+}
+
+.v-btn-toggle > .v-btn--active .v-icon {
+  color: white !important;
 }
 
 .muted {
@@ -116,7 +117,8 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
 
 .list > div:not(.reset-css),
 .list > a {
-  background: #21252964;
+  background: #4A657208;
+  border-bottom: thin solid #4A657264;
   padding: .25em .5em;
   margin-top: .5em;
 }
@@ -125,12 +127,6 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
 .main-application-container.mobile .list > a {
   margin-top: .25em;
   padding: .15em .35em;
-}
-
-@media (max-height:600px) {
-  .main-application-container.mobile.chat-is-focused .action-buttons {
-    display: none !important;
-  }
 }
 
 .page-default,
@@ -143,6 +139,11 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
 .main-application-container .action-buttons {
   padding-top: 1em; /* min-margin-top */
   margin-top: auto !important;
+}
+
+.main-application-container .d-flex.justify-space-between > .action-buttons {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
 }
 
 .action-buttons > * {
@@ -185,4 +186,8 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.flex-auto {
+  flex: auto;
 }

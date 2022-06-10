@@ -23,10 +23,26 @@
     class="page-default"
   >
 
-    <div
-      class="room-name"
-      v-text="room.name"
-    />
+    <div class="d-flex justify-space-between">
+      <div
+        class="room-name"
+        v-text="room.name"
+      />
+      <div
+        v-if="true || roomIsOwnedByLoggedUser || $device.isDesktop"
+        class="d-flex action-buttons"
+      >
+        <v-btn @click="() => leave()">
+          <v-icon
+            v-text="
+              roomIsOwnedByLoggedUser
+                ? 'mdi-close'
+                : 'mdi-arrow-left'
+            "
+          />
+        </v-btn>
+      </div>
+    </div>
 
     <div
       class="muted"
@@ -68,7 +84,22 @@
         v-text="$t('room.members')"
       />
 
-      <div class="list">
+      <div
+        class="list"
+        :style="
+          members.length > 1
+            ? {
+                'flex': 'auto',
+                'overflow-x': 'hidden',
+                'overflow-y': 'auto'
+              }
+            : {
+                'flex': 'unset',
+                'overflow-x': 'unset',
+                'overflow-y': 'unset'
+              }
+        "
+      >
         <div
           v-if="members.length === 0"
           class="muted px-4 py-2"
@@ -81,9 +112,13 @@
         >
           <v-icon
             :color="
-              member.isOnline
-                ? 'green'
-                : 'red'
+              $vuetify.theme.isDark
+                ? member.isOnline
+                  ? 'green'
+                  : 'red'
+                : member.isOnline
+                    ? 'blue accent-1'
+                    : ''
             "
             :title="$t(
               room.host.userName === member.userName
@@ -140,16 +175,6 @@
         :room-id="room.id"
         class="chat"
       />
-    </div>
-
-    <div class="mt-4 d-flex action-buttons">
-      <v-btn
-        class="ml-auto"
-        color="error"
-        @click="() => leave()"
-      >
-        {{ $t(roomIsOwnedByLoggedUser ? 'room.close' : 'room.leave') }}
-      </v-btn>
     </div>
 
   </div>
@@ -361,6 +386,11 @@ export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUs
 
 <style scoped>
 
+  .page-default, .lists-wrapper {
+    flex: 1 1 auto;
+    height: 0;
+  }
+
   .room-name {
     font-size: 1.3em;
   }
@@ -386,10 +416,13 @@ export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUs
   .lists-wrapper {
     flex: auto;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .lists-wrapper > .list {
-    max-height: 40%;
+    flex: auto;
+    /* max-height: 40%; */
     overflow-y: auto;
     overflow-x: hidden;
   }
@@ -398,9 +431,10 @@ export default class RoomDetailsPage extends mixins(GameAwarePageMixin, LoggedUs
 <style>
 
   .main-application-container.mobile .chat {
-    /* prevents it to be shrinked down to a 30px line when on screen keyboard is open */
+    /* prevents it to be shrinked down to a 30px or so when on screen keyboard is open */
     min-height: 200px;
-    background: #121212;
+    background: white;
     z-index: 999;
   }
+
 </style>

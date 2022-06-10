@@ -8,6 +8,7 @@
         class="icon"
         v-text="icon"
       />
+      
       <div
         class="subheader"
         v-text="subheader"
@@ -40,7 +41,6 @@ export default class CardLink extends Vue {
 <style scoped>
 
   .card-link {
-    padding: 1em;
     text-decoration: none;
     flex: 1 1 auto;
     height: 0;
@@ -54,20 +54,32 @@ export default class CardLink extends Vue {
     display: flex;
     flex-direction: column;
     height: 100%;
+    background: #e5e5e564;
+    /* box-shadow: none; */
   }
 
-  .icon, .subheader {
-    margin: .5rem auto;
+  .card-link:first-of-type > .v-card {
+    border-radius: .5em .5em 0 0;
+  }
+
+  .card-link:last-of-type > .v-card {
+    border-radius: 0 0 .5em .5em;
   }
 
   .icon {
+    margin: auto;
     font-size: 4em;
-    margin-top: auto;
+    color: #1565C0;
   }
 
   .subheader {
-    font-size: 1.25em;
-    margin-bottom: auto;
+    border-top: thin solid #e5e5e5;
+    background: #e5e5e564;
+    color: #344955;
+    padding: 1rem;
+    width: 100%;
+    text-align: center;
+    font-size: .9em;
   }
 
 </style>

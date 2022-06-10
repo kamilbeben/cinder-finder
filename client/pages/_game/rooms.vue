@@ -49,9 +49,13 @@
           <v-icon
             size="2em"
             :color="
-              room.host.isOnline
-                ? 'green'
-                : 'red'
+              $vuetify.theme.isDark
+                ? room.host.isOnline
+                  ? 'green'
+                  : 'red'
+                : room.host.isOnline
+                    ? 'blue accent-1'
+                    : ''
             "
             v-text="
               room.type === 'COOP'
@@ -186,13 +190,14 @@
       </v-navigation-drawer>
     </template>
 
-    <div class="mt-4 d-flex action-buttons">
+    <div
+      class="mt-4 d-flex action-buttons"
+    >
       <v-btn
         class="ml-auto"
-        color="error"
         @click="() => $router.push(`/${lowercaseGame}`)"
       >
-        {{ $t('room.go-back') }}
+        <v-icon v-text="'mdi-arrow-left'"/>
       </v-btn>
     </div>
   </div>

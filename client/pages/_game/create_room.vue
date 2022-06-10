@@ -86,20 +86,22 @@
       />
     </v-form>
 
-    <div class="mt-4 flex equal-width margin-between-sm action-buttons">
+    <div class="mt-4 d-flex action-buttons">
       <v-btn
-        color="success"
+        class="flex-auto"
+        color="blue darken-3"
         :loading="submitActionIsInProgress"
+        dark
         @click="submit"
       >
         {{ $t('create-room.submit') }}
       </v-btn>
 
       <v-btn
-        color="error"
+        class="ml-2"
         @click="cancel"
       >
-        {{ $t('create-room.cancel') }}
+        <v-icon v-text="'mdi-arrow-left'"/>
       </v-btn>
     </div>
   </div>

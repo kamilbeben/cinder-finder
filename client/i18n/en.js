@@ -73,8 +73,8 @@ export default {
   },
 
   'action': {
-    'create-room': 'Create room',
-    'list-rooms': 'List rooms'
+    'create-room': 'Seek help or invite others to PvP at a specific location',
+    'list-rooms': 'List rooms created by other users'
   },
 
   'validation-rule': {

@@ -43,8 +43,6 @@
     <v-text-field
       class="reset-css message-input"
       v-model="messageContent"
-      @focus="() => $nuxt.$emit('chat.focus')"
-      @blur="() => $nuxt.$emit('chat.blur')"
       :rules="[
         RuleFactory.maxLength(250)
       ]"
@@ -140,7 +138,5 @@ export default class Chat extends Vue {
     font-size: .9em;
     padding: .25em;
   }
-
-
 
 </style>
