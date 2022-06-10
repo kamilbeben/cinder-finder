@@ -92,13 +92,12 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
 }
 
 .v-btn-toggle > .v-btn::before {
-  opacity: 1;
+  opacity: 1 !important;
   transition: unset !important;
   background-color: transparent;
 }
 
 .v-btn-toggle > .v-btn--active::before {
-  opacity: 1;
   background-color: #1565c0;
 }
 
@@ -189,5 +188,5 @@ body > #__nuxt > #__layout > .v-application > .v-application--wrap {
 }
 
 .flex-auto {
-  flex: auto;
+  flex: auto !important;
 }
