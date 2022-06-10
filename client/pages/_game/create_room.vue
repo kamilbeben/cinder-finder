@@ -192,21 +192,23 @@ export default class CreateRoomPage extends mixins(GameAwarePageMixin, LoggedUse
   }
 
   private async submit () : Promise<void> {
-    
+
     // @ts-ignore
     this.formRef.validate()
 
+    let formAndCustomComponentsAreValid = this.formIsValid
+
     if (!this.roomDraft.platform) {
       this.paltformErrorMessages = [ <string> this.$t('validation-rule.field-is-required') ]
-      this.formIsValid = false
+      formAndCustomComponentsAreValid = false
     }
 
     if (!this.roomDraft.type) {
       this.roomTypeErrorMessages = [ <string> this.$t('validation-rule.field-is-required') ]
-      this.formIsValid = false
+      formAndCustomComponentsAreValid = false
     }
 
-    if (!this.formIsValid)
+    if (!formAndCustomComponentsAreValid)
       return
     
     this.submitActionIsInProgress = true
