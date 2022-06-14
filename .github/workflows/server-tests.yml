@@ -29,5 +29,5 @@ jobs:
 
       - name: Run maven tests
         working-directory: ./server
-        run: mvn --batch-mode --update-snapshots package
+        run: mvn --batch-mode --update-snapshots test
 
