@@ -12,6 +12,7 @@
       v-for="(message, index) in messages"
       :key="index"
       class="message d-flex flex-column"
+      data-selenium-id="chat.message"
     >
 
       <div class="d-flex my-auto py-1 header">
@@ -48,6 +49,7 @@
       ]"
       counter="250"
       append-outer-icon="mdi-send"
+      data-selenium-id="chat.input"
       @click:append-outer="sendMessage"
       @keydown.enter="sendMessage"
     />

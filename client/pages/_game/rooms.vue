@@ -23,6 +23,7 @@
         <div
           class="muted"
           v-text="$t('rooms.available-rooms')"
+          data-selenium-id="label.available-rooms"
         />
         <v-icon
           class="ml-auto pointer"
@@ -43,6 +44,7 @@
           :key="room.id"
           :to="`/${lowercaseGame}/room/${room.id}`"
           class="room d-flex pointer clear-css-nuxt-link overflow-hidden"
+          :data-selenium-id="`room-link.${room.id}`"
         >
 
           <!-- is host online && room type -->

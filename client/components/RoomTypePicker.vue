@@ -34,10 +34,16 @@
       @change="val => $emit('input', val)"
       class="button-group"
     >
-      <v-btn value="COOP">
+      <v-btn
+        value="COOP"
+        data-selenium-id="form-element.room-type.COOP"
+      >
         <v-icon v-text="'mdi-handshake'"/>
       </v-btn>
-      <v-btn value="PVP">
+      <v-btn
+        value="PVP"
+        data-selenium-id="form-element.room-type.PVP"
+      >
         <v-icon v-text="'mdi-fencing'"/>
       </v-btn>
     </v-btn-toggle>

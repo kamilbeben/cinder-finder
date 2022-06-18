@@ -1,0 +1,66 @@
+name: Selenium tests
+on: [push]
+jobs:
+  runner-job:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:11
+        env:
+          POSTGRES_PASSWORD: furledfinger
+          POSTGRES_USER: furledfinger
+          POSTGRES_DB: furledfinger
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+  
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+          cache: maven
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - uses: snok/install-poetry@v1
+        with:
+          version: 1.1.13
+      - uses: browser-actions/setup-chrome@latest
+
+      - name: Run server
+        working-directory: ./server
+        run: |
+          mvn --batch-mode --update-snapshots  -DskipTests clean package
+          nohup java -jar target/furled-finger-server-*.jar >/dev/null 2>&1 &
+          echo "Wait until server starts responsing..."
+          until curl -s -f "http://localhost:8001/api/user/me"
+          do
+            sleep 1
+          done
+          echo "Server has started!"
+
+      - name: Run client
+        working-directory: ./client
+        run: |
+          npm ci
+          npm run build
+          nohup npm run start >/dev/null 2>&1 &
+          echo "Wait until client starts responsing..."
+          until curl -s -f "http://localhost:3333"
+          do
+            sleep 1
+          done
+          echo "Client has started!"
+
+      - name: Run tests
+        working-directory: ./selenium
+        run: |
+          poetry install
+          poetry run pytest --capture=no --verbose --ci-mode=yes --webdriver=chrome

@@ -3,6 +3,7 @@
     <card-link
       to="/elden_ring"
       :subheader="$t('game.elden-ring')"
+      selenium-id="game-link.elden-ring"
     />
   </div>
 </template>

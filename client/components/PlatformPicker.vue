@@ -10,13 +10,22 @@
       class="button-group"
       :mandatory="!!value"
     >
-        <v-btn value="PSX">
+        <v-btn
+          value="PSX"
+          data-selenium-id="form-element.platform-picker.PSX"
+        >
           <v-icon v-text="'mdi-sony-playstation'"/>
         </v-btn>
-        <v-btn value="XBOX">
+        <v-btn
+          value="XBOX"
+          data-selenium-id="form-element.platform-picker.XBOX"
+        >
           <v-icon v-text="'mdi-microsoft-xbox'"/>
         </v-btn>
-        <v-btn value="PC">
+        <v-btn
+          value="PC"
+          data-selenium-id="form-element.platform-picker.PC"
+        >
           <v-icon v-text="'mdi-laptop'"/>
         </v-btn>
     </v-btn-toggle>
