@@ -152,6 +152,9 @@ public class RoomServiceImpl implements RoomService {
                                               List<String> locationIds,
                                               Integer minHostLevel,
                                               Integer maxHostLevel) {
+
+    updateIsOnlineFlagOnAllUsersInEveryRoom();
+
     return rooms.stream()
       .filter(room ->
         room.getGame() == game &&
@@ -205,6 +208,11 @@ public class RoomServiceImpl implements RoomService {
     return rooms.stream()
       .filter(room -> Objects.equals(room.getHost().getUserName(), userService.getCurrentUser().getUserName()))
       .findAny();
+  }
+
+  private void updateIsOnlineFlagOnAllUsersInEveryRoom () {
+    // avoid ConcurrentModificationException
+    new ArrayList<>(rooms).forEach(this::updateIsOnlineFlagOnAllUsers);
   }
 
   private void updateIsOnlineFlagOnAllUsers(RoomDetails room) {
