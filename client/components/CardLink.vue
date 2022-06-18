@@ -2,6 +2,7 @@
   <nuxt-link
     class="card-link"
     :to="to"
+    :data-selenium-id="seleniumId"
   >
     <v-card>
       <v-icon
@@ -26,14 +27,17 @@ import { Component, Prop, Vue } from 'nuxt-property-decorator'
 })
 export default class CardLink extends Vue {
 
-  @Prop()
+  @Prop(String)
   private readonly icon !: string
 
-  @Prop()
+  @Prop(String)
   private readonly subheader !: string
 
-  @Prop()
+  @Prop(String)
   private readonly to !: string
+
+  @Prop({ type: String, required: true })
+  private readonly seleniumId !: string
 
 }
 </script>

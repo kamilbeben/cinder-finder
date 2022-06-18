@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "furledfinger-test"
+version = "0.1.0"
+description = ""
+authors = ["Kamil Bęben <kbeben@puretech.com.pl>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+selenium = "^4.2.0"
+pytest = "^7.1.2"
+pytest-xdist = "^2.5.0"
+autopep8 = "^1.6.0"
+flake8 = "^4.0.1"
+webdriver-manager = "^3.7.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

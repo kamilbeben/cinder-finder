@@ -41,6 +41,7 @@
           RuleFactory.maxLength(50)
         ]"
         counter="50"
+        data-selenium-id="form-element.room-name"
       />
 
       <v-text-field
@@ -50,6 +51,7 @@
           RuleFactory.maxLength(150)
         ]"
         counter="150"
+        data-selenium-id="form-element.room-description"
       />
 
       <v-text-field
@@ -62,6 +64,7 @@
           RuleFactory.minLength(3)
         ]"
         counter="10"
+        data-selenium-id="form-element.password"
       />
 
       <v-text-field
@@ -73,6 +76,7 @@
           RuleFactory.minLength(3)
         ]"
         counter="50"
+        data-selenium-id="form-element.in-game-name"
       />
 
       <v-text-field
@@ -83,6 +87,7 @@
           RuleFactory.max(9999),
           RuleFactory.min(1)
         ]"
+        data-selenium-id="form-element.host-level"
       />
     </v-form>
 
@@ -93,6 +98,7 @@
         :loading="submitActionIsInProgress"
         dark
         @click="submit"
+        data-selenium-id="form-action.submit"
       >
         {{ $t('create-room.submit') }}
       </v-btn>
@@ -100,6 +106,7 @@
       <v-btn
         class="ml-2"
         @click="cancel"
+        data-selenium-id="form-action.cancel"
       >
         <v-icon v-text="'mdi-arrow-left'"/>
       </v-btn>

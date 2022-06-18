@@ -27,12 +27,16 @@
       <div
         class="room-name"
         v-text="room.name"
+        data-selenium-id="label.room-name"
       />
       <div
         v-if="true || roomIsOwnedByLoggedUser || $device.isDesktop"
         class="d-flex action-buttons"
       >
-        <v-btn @click="() => leave()">
+        <v-btn
+          @click="() => leave()"
+          data-selenium-id="form-action.leave"
+        >
           <v-icon
             v-text="
               roomIsOwnedByLoggedUser
@@ -109,6 +113,7 @@
           v-for="member in members"
           :key="member.userName"
           class="member d-flex"
+          data-selenium-id="members.entry"
         >
           <v-icon
             :color="
@@ -148,10 +153,12 @@
                     : ''
                 )
               "
+              data-selenium-id="label.member.in-game-name"
             />
             <div
               class="muted"
               v-text="'@' + member.userName"
+              data-selenium-id="label.member.user-name"
             />
           </div>
           <v-btn

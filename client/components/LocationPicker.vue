@@ -14,6 +14,7 @@
     class="locations-autocomplete"
     item-text="name"
     item-value="id"
+    data-selenium-id="form-element.location-picker"
   >
     <template v-slot:selection="data">
       <v-chip
@@ -43,7 +44,10 @@
       </v-list-item-avatar>
 
       <!-- name -->
-      <v-list-item-content>
+      <v-list-item-content
+        data-selenium-id="form-element.location-picker.item-content"
+        data-selenium-value="data.item.id"
+      >
         <v-list-item-title v-html="data.item.name"></v-list-item-title>
         <v-list-item-subtitle v-html="data.item.groupName"></v-list-item-subtitle>
       </v-list-item-content>
