@@ -1,7 +1,13 @@
 
-Matchmaking application, for now it supports Elden Ring. I'm planning to expand it to support other soulsborne games in the future.
+# Furled Finger
 
-https://furledfinger.com
+<p align="center">
+  <img src="https://furledfinger.com/mobile_icon.svg" alt="ApplicationIcon" width="150"/>
+  <br/>
+  <a href="https://furledfinger.com">furledfinger.com</a>
+</p>
+
+Matchmaking application, for now it supports Elden Ring. I'm planning to expand it to support other soulsborne games in the future.
 
 # Development
 ## Client
@@ -53,4 +59,19 @@ CREATE DATABASE "furledfinger"
   TEMPLATE template0;
 ```
 
-Make sure that after your changes the tests are still passing
+## Automated tests
+### Requirements
+ - python 3.7.3
+ - poetry 1.1.13
+ - Google chrome or Firefox
+
+### Running tests
+```bash
+cd selenium
+poetry install
+
+# run in chrome
+poetry run pytest --capture=no --verbose --ci-mode=no --webdriver=chrome
+# run in firefox
+poetry run pytest --capture=no --verbose --ci-mode=no --webdriver=firefox
+```
