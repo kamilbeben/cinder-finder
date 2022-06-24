@@ -2,6 +2,7 @@ package pl.beben.furledfinger.service;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 
 import static pl.beben.furledfinger.pojo.event.AbstractEvent.Type;
 
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class RoomServiceImpl implements RoomService {
@@ -55,6 +57,10 @@ public class RoomServiceImpl implements RoomService {
     room.setId(nextId());
     this.rooms.add(room);
     publishGeneralEvent(room, new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_CREATED, room));
+    log.info(
+      "Room [game = {}, id = {}, name = {}, location = {}] has been created by {}",
+      room.getGame(), room.getId(), room.getName(), room.getLocationId(), currentUser.getInGameName()
+    );
     return room.getId();
   }
 
@@ -75,6 +81,7 @@ public class RoomServiceImpl implements RoomService {
       if (!isCurrentUserIsAMemberOfThisRoom(room, currentUser)) {
         publishRoomEvent(id, new UserEvent(Type.USER_HAS_JOINED, currentUser));
         room.addGuest(currentUser);
+        log.info("{} has joined the room [id = {}]", currentUser.getInGameName(), room.getId());
       }
 
       ping(room.getId());
@@ -122,8 +129,10 @@ public class RoomServiceImpl implements RoomService {
       .ofNullable(getById(id))
       .ifPresent(room -> {
         final var currentUser = userService.getCurrentUser();
-        if (room.removeGuestByUserName(currentUser.getUserName()))
+        if (room.removeGuestByUserName(currentUser.getUserName())) {
           publishRoomEvent(id, new UserEvent(Type.USER_HAS_LEFT, currentUser));
+          log.info("{} has left the room [id = {}]", currentUser.getInGameName(), room.getId());
+        }
       });
   }
 
@@ -287,6 +296,7 @@ public class RoomServiceImpl implements RoomService {
     rooms.remove(room);
     publishGeneralEvent(room, new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_REMOVED, room));
     publishRoomEvent(room.getId(), new IdentifiedRoomEvent(Type.ROOM_HAS_BEEN_REMOVED, room));
+    log.info("{} has closed the room [id = {}]", room.getHost().getInGameName(), room.getId());
   }
 
   private void publishGeneralEvent(RoomDraftPojo room, AbstractEvent event) {
