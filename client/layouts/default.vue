@@ -21,6 +21,7 @@
       <v-toolbar-title
         class="toolbar-title"
         v-text="$t('toolbar.title')"
+        data-selenium-id="toolbar.title"
       />
       <v-spacer/>
     </v-app-bar>

@@ -28,11 +28,15 @@
         <v-icon
           class="ml-auto pointer"
           v-text="'mdi-filter-menu'"
+          data-selenium-id="form-element.open-filters"
           @click="openFilterMenu"
         />
       </div>
 
-      <div class="room-list list">
+      <div
+        class="room-list list"
+        data-selenium-id="room-list"
+      >
         <div
           v-if="rooms.length === 0"
           class="muted px-4 py-2"
@@ -72,6 +76,7 @@
               <!-- room name -->
               <div
                 class="ml-2 my-auto ellipsis"
+                data-selenium-id="room-name"
                 v-text="room.name"
               />
               <!-- host name -->

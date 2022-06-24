@@ -1,82 +1,74 @@
 
-from time import sleep
 from typing import List
-from selenium.webdriver.remote.webelement import WebElement
-from selenium import webdriver as selenium_webdriver
-from selenium.webdriver.common.by import By
+import selenium
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 
-from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support.ui import WebDriverWait
+
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service as ChromeService
 
-
-from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.firefox import GeckoDriverManager
+from selenium.webdriver.firefox.service import Service as FirefoxService
 
-generic_webdriver = selenium_webdriver.Chrome
+GenericWebdriver = selenium.webdriver.Chrome
 
-def construct_webdriver (webdriver_name : str, ci_mode_is_enabled : bool) -> generic_webdriver :
-
-  print('call construct_webdriver(' + webdriver_name + ', ' + str(ci_mode_is_enabled) + ')')
+def construct_webdriver (webdriver_name : str, ci_mode_is_enabled : bool) -> GenericWebdriver :
 
   # TODO https://github.com/SergeyPirogov/webdriver_manager#gh_token
   if webdriver_name == 'firefox' :
-    options = selenium_webdriver.FirefoxOptions()
+    options = selenium.webdriver.FirefoxOptions()
     if ci_mode_is_enabled:
       options.add_argument('--headless')
       options.add_argument('--no-sandbox')
 
-    webdriver = selenium_webdriver.Firefox(
+    webdriver = selenium.webdriver.Firefox(
       service = FirefoxService(GeckoDriverManager().install()),
       options = options
     )
 
   else :
-    options = selenium_webdriver.ChromeOptions()
+    options = selenium.webdriver.ChromeOptions()
     if ci_mode_is_enabled:
       options.add_argument('--headless')
       options.add_argument('--no-sandbox')
 
-    webdriver = selenium_webdriver.Chrome(
+    webdriver = selenium.webdriver.Chrome(
       service = ChromeService(ChromeDriverManager().install()),
       options = options
     )
 
-  webdriver.implicitly_wait(10)
   webdriver.get('http://localhost:3333')
 
   return webdriver
 
-def find_element_by_selenium_id (webdriver : generic_webdriver, selenium_id : str) -> WebElement :
-  return webdriver.find_element(By.CSS_SELECTOR, '[data-selenium-id="' + selenium_id + '"]')
+def find_element_by_selenium_id (webdriver : GenericWebdriver, selenium_id : str, wait_for_element_to_be_clickable : bool = False) -> WebElement :
 
-def find_elements_by_selenium_id (webdriver : generic_webdriver, selenium_id : str) -> List[WebElement] :
+  if wait_for_element_to_be_clickable :
+    predicate = expected_conditions.element_to_be_clickable((By.CSS_SELECTOR, '[data-selenium-id="' + selenium_id + '"]'))
+  else :
+    predicate = expected_conditions.presence_of_element_located((By.CSS_SELECTOR, '[data-selenium-id="' + selenium_id + '"]'))
+
+  return WebDriverWait(webdriver, 3, 0.1).until(predicate)
+
+def find_elements_by_selenium_id (webdriver : GenericWebdriver, selenium_id : str) -> List[WebElement] :
   return webdriver.find_elements(By.CSS_SELECTOR, '[data-selenium-id="' + selenium_id + '"]')
 
-def limited_assert_that_predicate_is_true (predicate : callable, description : str) -> None :
-  failure_count = 0
+def element_count_to_be_equal_to (selenium_id : str, expected_count : int) -> bool :
+  return lambda webdriver : len(find_elements_by_selenium_id(webdriver, selenium_id)) == expected_count
 
-  while failure_count < 100 :
-
-    if (predicate()) :
-      return
-
-    failure_count += 1
-    if failure_count > 100 :
-      raise Exception(description + ' ::  has been polled too many times')
-
-    print(description + ' :: does not match predicate yet, sleeping 0.05 seconds')
-    sleep(0.05)
-
-def assert_elements_count_is_equal_to (webdriver : generic_webdriver, selenium_id : str, expected_elements_count : int) -> None :
-  limited_assert_that_predicate_is_true(
-    lambda : len(find_elements_by_selenium_id(webdriver, selenium_id)) == expected_elements_count,
-    'wait_for_elements_count_to_be(webdriver, ' + selenium_id + ', ' + str(expected_elements_count) + ')'
+def assert_elements_count_is_equal_to (webdriver : GenericWebdriver, selenium_id : str, expected_count : int) -> None :
+  WebDriverWait(webdriver, 3, 0.1).until(
+    element_count_to_be_equal_to(selenium_id, expected_count),
+    'wait_for_elements_count_to_be(webdriver, ' + selenium_id + ', ' + str(expected_count) + ')'
   )
 
-def wait_for_axios_response (webdriver : generic_webdriver, response_predicate : callable) -> None :
-  
-  def wait_for_axios_response_predicate () -> bool :
+def wait_for_axios_response (webdriver : GenericWebdriver, response_predicate : callable) -> None :
+
+  def wait_for_axios_response_predicate (webdriver : GenericWebdriver) -> bool :
     try:
       next(
         filter(
@@ -87,19 +79,16 @@ def wait_for_axios_response (webdriver : generic_webdriver, response_predicate :
     except:
       return False
 
-  limited_assert_that_predicate_is_true(
-    wait_for_axios_response_predicate,
-    'wait_for_axios_response'
-  )
+  WebDriverWait(webdriver, 3, 0.1).until(wait_for_axios_response_predicate)
 
-def create_room (webdriver : generic_webdriver, platform : str, room_type : str, room_name : str, password : str, host_name : str) -> None :
+def create_room (webdriver : GenericWebdriver, platform : str, room_type : str, room_name : str, password : str, host_name : str, location_index : int) -> None :
 
   # go to /_game/create_room.vue
-  find_element_by_selenium_id(webdriver, 'game-action.create-room').click()
+  find_element_by_selenium_id(webdriver, 'game-action.create-room', True).click()
   
   # fill out the form
-  find_element_by_selenium_id(webdriver, 'form-element.location-picker').click()
-  find_element_by_selenium_id(webdriver, 'form-element.location-picker.item-content').click()
+  find_element_by_selenium_id(webdriver, 'form-element.location-picker', True).click()
+  find_elements_by_selenium_id(webdriver, 'form-element.location-picker.item-content')[location_index].click()
 
   find_element_by_selenium_id(webdriver, 'form-element.platform-picker.' + platform).click()
   find_element_by_selenium_id(webdriver, 'form-element.room-type.' + room_type).click()
@@ -115,25 +104,43 @@ def create_room (webdriver : generic_webdriver, platform : str, room_type : str,
   )
 
   # accept form
-  find_element_by_selenium_id(webdriver, 'form-action.submit').click()
+  find_element_by_selenium_id(webdriver, 'form-action.submit', True).click()
   
   # wait for /_game/room/_id.vue redirect and render is complete
   find_element_by_selenium_id(webdriver, 'label.room-name')
 
-def join_room (webdriver : generic_webdriver, platform : str, room_id : str) -> None :
-  # go to /_game/create_room.vue
-  find_element_by_selenium_id(webdriver, 'game-action.list-rooms').click()
+def leave_room (webdriver : GenericWebdriver) -> None :
+  button = find_element_by_selenium_id(webdriver, 'form-action.leave', True)
+  icon = button.find_element(By.TAG_NAME, 'i')
+  user_is_host = 'mdi-close' in icon.get_dom_attribute('class')
+
+  button.click()
+
+  if user_is_host :
+    assert_that_user_has_been_redirected_to(webdriver, '/create_room')
+  else :
+    assert_that_user_has_been_redirected_to(webdriver, '/rooms')
+
+def assert_that_user_has_been_redirected_to (webdriver : GenericWebdriver, url : str) -> None :
+  WebDriverWait(webdriver, 3, 0.1).until(
+    expected_conditions.url_contains(url),
+    'assert that user has been redirected to ' + url
+  )
+
+def join_room (webdriver : GenericWebdriver, platform : str, room_id : str) -> None :
+  # go to /_game/rooms.vue
+  find_element_by_selenium_id(webdriver, 'game-action.list-rooms', True).click()
 
   # select desired platform
-  find_element_by_selenium_id(webdriver, 'form-element.platform-picker.' + platform).click()
+  find_element_by_selenium_id(webdriver, 'form-element.platform-picker.' + platform, True).click()
 
   # go to /_game/room/${room_id}
-  find_element_by_selenium_id(webdriver, 'room-link.' + room_id).click()
+  find_element_by_selenium_id(webdriver, 'room-link.' + room_id, True).click()
 
   # and wait until it initializes
   find_element_by_selenium_id(webdriver, 'label.room-name')
 
-def send_chat_message (webdriver : generic_webdriver, chat_message_content : str) -> None :
+def send_chat_message (webdriver : GenericWebdriver, chat_message_content : str) -> None :
   input = find_element_by_selenium_id(webdriver, 'chat.input')
   input.send_keys(chat_message_content)
   input.send_keys(Keys.ENTER)

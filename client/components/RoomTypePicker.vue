@@ -19,6 +19,7 @@
         value="COOP"
         :label="$t('game-mode.co-op')"
         class="mt-0"
+        data-selenium-id="form-element.room-type.COOP"
       />
       <v-checkbox
         :input-value="value"
@@ -26,6 +27,7 @@
         value="PVP"
         :label="$t('game-mode.pvp')"
         class="mt-0"
+        data-selenium-id="form-element.room-type.PVP"
       />
     </v-container>
     <v-btn-toggle

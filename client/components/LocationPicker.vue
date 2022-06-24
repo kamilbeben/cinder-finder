@@ -46,7 +46,6 @@
       <!-- name -->
       <v-list-item-content
         data-selenium-id="form-element.location-picker.item-content"
-        data-selenium-value="data.item.id"
       >
         <v-list-item-title v-html="data.item.name"></v-list-item-title>
         <v-list-item-subtitle v-html="data.item.groupName"></v-list-item-subtitle>
